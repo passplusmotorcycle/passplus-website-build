@@ -142,6 +142,12 @@ function renderFaqs(lang) {
 function observeReveals() {
   const nodes = document.querySelectorAll('.reveal:not(.is-in)');
   if (!nodes.length) return;
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    nodes.forEach((n) => n.classList.add('is-in'));
+    return;
+  }
+
   const io = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -151,9 +157,14 @@ function observeReveals() {
         }
       });
     },
-    { threshold: 0.16, rootMargin: '0px 0px -8% 0px' }
+    { threshold: 0.08, rootMargin: '0px 0px -4% 0px' }
   );
   nodes.forEach((n) => io.observe(n));
+
+  // Ensure below-fold content never stays invisible if observer misses it.
+  window.setTimeout(() => {
+    document.querySelectorAll('.reveal:not(.is-in)').forEach((n) => n.classList.add('is-in'));
+  }, 1200);
 }
 
 function wireChrome() {
