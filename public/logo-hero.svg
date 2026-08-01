@@ -1,21 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160" role="img" aria-label="PassPlus Motorcycle training Service">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 150" role="img" aria-label="PassPlus Motorcycle training Service">
+  <!-- Same left-aligned layout and brand colors as the attached logo -->
   <text
-    x="260"
-    y="82"
-    text-anchor="middle"
+    x="24"
+    y="78"
+    text-anchor="start"
     font-family="Arial Black, Arial, Helvetica, sans-serif"
-    font-size="78"
+    font-size="72"
     font-weight="900"
-    letter-spacing="-4"
-  ><tspan fill="#339B40">Pass</tspan><tspan fill="#1A2358" dx="-2">Plus</tspan></text>
+    letter-spacing="-5"
+  ><tspan fill="#329A3F">Pass</tspan><tspan fill="#1E2A64" dx="-3">Plus</tspan></text>
   <text
-    x="260"
-    y="128"
-    text-anchor="middle"
+    x="24"
+    y="122"
+    text-anchor="start"
     font-family="Arial, Helvetica, sans-serif"
-    font-size="23"
+    font-size="22"
     font-style="italic"
-    letter-spacing="0.2"
-    fill="#1A2358"
+    fill="#1E2A64"
   >Motorcycle training Service</text>
 </svg>
