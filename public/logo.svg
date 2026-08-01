@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 140" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">PassPlus Motorcycle Training Service</title>
+  <desc id="logoDesc">Pass in green, Plus in navy, with motorcycle training service tagline</desc>
+  <text x="260" y="72" text-anchor="middle" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-size="72" font-weight="900" letter-spacing="-1.5">
+    <tspan fill="#2DB84B">Pass</tspan><tspan fill="#0B1F3A">Plus</tspan>
+  </text>
+  <text x="260" y="112" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="22" font-style="italic" fill="#0B1F3A">
+    Motorcycle training Service
+  </text>
+</svg>
