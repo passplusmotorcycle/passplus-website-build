@@ -25,5 +25,5 @@ npm run preview
 
 ## Contact placeholders to update
 
-- Social links (Instagram / Facebook / Threads) are placeholders (`#`) until official URLs are provided.
+- Social links: Instagram, Facebook, and Threads are wired on the homepage contact section.
 - Replace `public/hero-motorcycle.jpg` with your own training photos when ready.
