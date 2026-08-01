@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Syne:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
 
 :root {
   --green: #2db84b;
@@ -14,8 +14,10 @@
   --shadow: 0 24px 60px rgba(11, 31, 58, 0.18);
   --radius: 4px;
   --max: 1120px;
-  --font-display: 'Syne', 'Noto Sans TC', sans-serif;
-  --font-body: 'Noto Sans TC', 'Syne', sans-serif;
+  /* Match PassPlus logo: heavy, clean sans (Arial Black–like), not ultra-wide display fonts */
+  --font-brand: 'Arial Black', 'Arial', 'Helvetica Neue', 'Montserrat', sans-serif;
+  --font-display: 'Montserrat', 'Noto Sans TC', sans-serif;
+  --font-body: 'Noto Sans TC', 'Montserrat', sans-serif;
 }
 
 *,
@@ -101,16 +103,18 @@ button,
   gap: 0.65rem;
 }
 
-.brand-lockup img {
-  height: 42px;
+.brand-lockup img,
+.brand-lockup .brand-mark {
+  height: 34px;
   width: auto;
+  display: block;
 }
 
 .brand-word {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.35rem;
-  letter-spacing: -0.03em;
+  font-family: var(--font-brand);
+  font-weight: 900;
+  font-size: 1.45rem;
+  letter-spacing: -0.02em;
   line-height: 1;
 }
 
@@ -280,13 +284,20 @@ button,
   padding: 7rem 1.25rem 3.5rem;
 }
 
+.hero-logo {
+  width: min(520px, 88vw);
+  height: auto;
+  margin: 0 0 1.35rem;
+  animation: riseIn 0.9s ease both;
+}
+
 .hero-brand {
-  font-family: var(--font-display);
-  font-size: clamp(3.4rem, 9vw, 6.4rem);
-  font-weight: 800;
-  letter-spacing: -0.045em;
+  font-family: var(--font-brand);
+  font-size: clamp(3.2rem, 8vw, 5.6rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
   line-height: 0.95;
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.2rem;
   animation: riseIn 0.9s ease both;
 }
 
@@ -300,8 +311,10 @@ button,
 
 .hero-tag {
   margin: 0 0 1.4rem;
+  font-family: Arial, Helvetica, sans-serif;
   font-style: italic;
-  letter-spacing: 0.02em;
+  font-size: clamp(1rem, 2.2vw, 1.25rem);
+  letter-spacing: 0.01em;
   color: rgba(255, 255, 255, 0.88);
   animation: riseIn 0.9s ease 0.08s both;
 }
@@ -542,8 +555,9 @@ button,
 }
 
 .footer-brand {
-  font-family: var(--font-display);
-  font-weight: 800;
+  font-family: var(--font-brand);
+  font-weight: 900;
+  letter-spacing: -0.02em;
   color: var(--white);
 }
 

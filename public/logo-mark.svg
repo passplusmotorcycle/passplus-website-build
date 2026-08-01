@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" role="img" aria-label="PassPlus">
+  <text
+    x="0"
+    y="38"
+    font-family="Arial Black, Arial, Helvetica, sans-serif"
+    font-size="40"
+    font-weight="900"
+    letter-spacing="-1.2"
+  >
+    <tspan fill="#2DB84B">Pass</tspan><tspan fill="#0B1F3A">Plus</tspan>
+  </text>
+</svg>
