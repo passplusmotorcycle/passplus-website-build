@@ -9,12 +9,27 @@ Bilingual marketing site for **PassPlus Motorcycle training Service** (Hong Kong
 - Traditional Chinese / English language toggle
 - Brand colours from the PassPlus logo (green + navy)
 
-## Develop
+## Develop / Preview updates
+
+First time:
 
 ```bash
+git clone -b cursor/passplus-motorcycle-website-b70f https://github.com/passplusmotorcycle/passplus-website-build.git
+cd passplus-website-build
 npm install
 npm run dev
 ```
+
+Later updates (no need to re-download ZIP):
+
+```bash
+cd passplus-website-build
+git pull origin cursor/passplus-motorcycle-website-b70f
+npm run dev
+```
+
+Open http://localhost:5173/ and hard-refresh with `Ctrl + Shift + R`.
+
 
 ## Build
 
