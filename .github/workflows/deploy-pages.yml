@@ -3,7 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - cursor/passplus-motorcycle-website-b70f
       - main
   workflow_dispatch:
 
