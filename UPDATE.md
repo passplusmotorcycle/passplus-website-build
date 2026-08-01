@@ -27,11 +27,7 @@ npm run dev
 
 **https://passplusmotorcycle.github.io/passplus-website-build/**
 
-### 第一次上線（你要�址：
-
-**https://passplusmotorcycle.github.io/passplus-website-build/**
-
-### 第一次上線（你要喺 GitHub 做兩步）
+### 第一次上線（你要喺 GitHub 做）
 
 而家網站程式已經準備好，但公開上線需要你用 **repo 擁有者帳號** 開一次設定（我冇權限代你開）：
 
