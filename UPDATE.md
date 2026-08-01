@@ -43,11 +43,13 @@ npm run dev
 2. **Build and deployment → Source** 選 **GitHub Actions**
 3. 儲存
 
-**C. 重新跑部署**
+**C. 合併去 main（重要）**
 
-1. 打開 https://github.com/passplusmotorcycle/passplus-website-build/actions
-2. 撳最新一次 **Deploy to GitHub Pages**
-3. 撳 **Re-run failed jobs**（或 **Re-run all jobs**）
-4. 等變成綠色 ✓ 之後，開上面個公開網址
+GitHub Pages 只允許由 **`main`** 分支上線。功能分支再跑部署都會失敗。
 
-完成後任何人開個連結就可以睇，唔使登入。之後每次有 push，網站會自動更新。
+1. 打開 https://github.com/passplusmotorcycle/passplus-website-build/pull/1
+2. 撳 **Merge pull request** → **Confirm merge**
+3. 合併後會自動跑 Deploy；等 Actions 變綠色 ✓
+4. 開公開網址：https://passplusmotorcycle.github.io/passplus-website-build/
+
+完成後任何人開個連結就可以睇，唔使登入。之後每次有改動合併入 `main`，網站會自動更新。

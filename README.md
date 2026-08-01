@@ -56,6 +56,7 @@ The deploy workflow **build already succeeds**. Deploy fails until Pages is enab
 
 1. **Make the repository public** (Settings → Danger Zone → Change visibility → Public)
 2. **Enable Pages**: https://github.com/passplusmotorcycle/passplus-website-build/settings/pages → Source = **GitHub Actions** → Save
-3. **Re-run deploy**: Actions → Deploy to GitHub Pages → Re-run failed jobs
+3. **Merge the PR into `main`**: https://github.com/passplusmotorcycle/passplus-website-build/pull/1 → Merge pull request  
+   (Pages only allows deploys from `main`; feature-branch deploys are blocked by environment rules.)
 
-After that, anyone with the link can open the site. Later pushes update the site automatically.
+After merge, Actions will deploy automatically. Anyone with the link can open the site.
