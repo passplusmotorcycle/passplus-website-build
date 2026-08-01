@@ -26,4 +26,4 @@ npm run preview
 ## Contact placeholders to update
 
 - Social links (Instagram / Facebook / Threads) are placeholders (`#`) until official URLs are provided.
-- Replace the Unsplash hero photo with your own training photos when ready.
+- Replace `public/hero-motorcycle.jpg` with your own training photos when ready.
