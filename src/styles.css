@@ -1,12 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
 
 :root {
-  --green: #2db84b;
-  --green-deep: #1f9a3a;
+  --green: #339b40;
+  --green-deep: #2a8535;
   --green-soft: rgba(45, 184, 75, 0.14);
-  --navy: #0b1f3a;
-  --navy-2: #132a4a;
-  --ink: #0b1f3a;
+  --navy: #1a2358;
+  --navy-2: #1d2962;
+  --ink: #1a2358;
   --muted: #5b6b7f;
   --paper: #f3f6f8;
   --line: rgba(11, 31, 58, 0.12);
