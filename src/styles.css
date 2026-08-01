@@ -111,21 +111,15 @@ button,
   display: block;
 }
 
-.hero-brand-wrap {
-  display: inline-block;
-  margin: 0 0 1.35rem;
-  animation: riseIn 0.9s ease both;
-}
-
 .hero-logo {
   display: block;
   width: min(380px, 86vw);
   height: auto;
+  margin: 0 0 1.35rem;
+  animation: riseIn 0.9s ease both;
+  background: transparent;
   filter: none;
-  image-rendering: auto;
 }
-
-/* Keep brand colors identical to uploaded artwork (green Pass + navy Plus/tagline) */
 
 .brand-word {
   font-family: var(--font-brand);

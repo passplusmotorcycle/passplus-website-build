@@ -1,16 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 180" role="img" aria-label="PassPlus Motorcycle training Service">
-  <!-- Same brand colors as original artwork (not white Plus) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 170" role="img" aria-label="PassPlus Motorcycle training Service">
   <text
     x="260"
-    y="92"
+    y="88"
     text-anchor="middle"
-    dominant-baseline="middle"
     font-family="Arial Black, Arial, Helvetica, sans-serif"
-    font-size="78"
+    font-size="76"
     font-weight="900"
     letter-spacing="-1.5"
   >
-    <tspan fill="#2FA84A">Pass</tspan><tspan fill="#1A2358">Plus</tspan>
+    <tspan fill="#339B40">Pass</tspan><tspan fill="#1A2358">Plus</tspan>
   </text>
   <text
     x="260"
