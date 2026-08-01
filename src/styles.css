@@ -1,5 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
 
+/* Bundled so GitHub Pages base path works correctly */
+/* hero image imported via CSS relative path below */
+
 :root {
   --green: #2db84b;
   --green-deep: #1f9a3a;
@@ -283,7 +286,7 @@ button,
   inset: 0;
   background:
     linear-gradient(180deg, rgba(11, 31, 58, 0.28) 0%, rgba(11, 31, 58, 0.55) 45%, rgba(11, 31, 58, 0.88) 100%),
-    url('/hero-motorcycle.jpg') center/cover no-repeat;
+    url('./assets/hero-motorcycle.jpg') center/cover no-repeat;
   transform: scale(1.04);
   animation: heroZoom 18s ease-in-out infinite alternate;
 }

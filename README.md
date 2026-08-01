@@ -42,3 +42,18 @@ npm run preview
 
 - Social links: Instagram, Facebook, and Threads are wired on the homepage contact section.
 - Replace `public/hero-motorcycle.jpg` with your own training photos when ready.
+
+
+## Public website (GitHub Pages)
+
+After GitHub Pages is enabled, the live site will be:
+
+**https://passplusmotorcycle.github.io/passplus-website-build/**
+
+### One-time setup (repo owner)
+
+1. Open https://github.com/passplusmotorcycle/passplus-website-build/settings/pages
+2. Under **Build and deployment** → **Source**, choose **GitHub Actions**
+3. Save. The deploy workflow will publish automatically on each push.
+
+Anyone with the link can open the site — no login required.
