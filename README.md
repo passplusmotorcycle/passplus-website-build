@@ -46,14 +46,16 @@ npm run preview
 
 ## Public website (GitHub Pages)
 
-After GitHub Pages is enabled, the live site will be:
+Live URL after setup:
 
 **https://passplusmotorcycle.github.io/passplus-website-build/**
 
-### One-time setup (repo owner)
+### One-time setup (repo owner — required)
 
-1. Open https://github.com/passplusmotorcycle/passplus-website-build/settings/pages
-2. Under **Build and deployment** → **Source**, choose **GitHub Actions**
-3. Save. The deploy workflow will publish automatically on each push.
+The deploy workflow **build already succeeds**. Deploy fails until Pages is enabled. On a free GitHub account the repo must also be **public** so visitors can open the site without logging in.
 
-Anyone with the link can open the site — no login required.
+1. **Make the repository public** (Settings → Danger Zone → Change visibility → Public)
+2. **Enable Pages**: https://github.com/passplusmotorcycle/passplus-website-build/settings/pages → Source = **GitHub Actions** → Save
+3. **Re-run deploy**: Actions → Deploy to GitHub Pages → Re-run failed jobs
+
+After that, anyone with the link can open the site. Later pushes update the site automatically.
