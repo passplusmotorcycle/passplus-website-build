@@ -117,6 +117,7 @@ button,
   margin: 0 0 1.35rem;
   animation: riseIn 0.9s ease both;
   filter: none;
+  image-rendering: auto;
 }
 
 .brand-word {

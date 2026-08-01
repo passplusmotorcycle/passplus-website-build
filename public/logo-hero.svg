@@ -8,7 +8,7 @@
     font-weight="900"
     letter-spacing="-2"
   >
-    <tspan fill="#46A352">Pass</tspan><tspan fill="#1A2459">Plus</tspan>
+    <tspan fill="#46A352">Pass</tspan><tspan fill="#FFFFFF">Plus</tspan>
   </text>
   <text
     x="320"
@@ -17,7 +17,7 @@
     font-family="Arial, Helvetica, sans-serif"
     font-size="30"
     font-style="italic"
-    fill="#1A2459"
+    fill="#FFFFFF"
   >
     Motorcycle training Service
   </text>
