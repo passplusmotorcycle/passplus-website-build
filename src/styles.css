@@ -117,8 +117,6 @@ button,
   margin: 0 0 1.35rem;
   animation: riseIn 0.9s ease both;
   filter: none;
-  /* Solid white plate from original artwork — prevents transparent-edge halo on dark photo */
-  background: #fff;
 }
 
 .brand-word {
