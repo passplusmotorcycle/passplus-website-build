@@ -2,6 +2,10 @@
 
 Bilingual marketing site for **PassPlus Motorcycle training Service** (Hong Kong).
 
+## Live site
+
+**https://passplusmotorcyclehk.com**
+
 ## Features
 
 - Homepage with services, pricing, selling points, audience, and WhatsApp / phone contact
@@ -9,27 +13,23 @@ Bilingual marketing site for **PassPlus Motorcycle training Service** (Hong Kong
 - Traditional Chinese / English language toggle
 - Brand colours from the PassPlus logo (green + navy)
 
-## Develop / Preview updates
-
-First time:
+## Develop / Preview
 
 ```bash
-git clone -b cursor/passplus-motorcycle-website-b70f https://github.com/passplusmotorcycle/passplus-website-build.git
+git clone https://github.com/passplusmotorcycle/passplus-website-build.git
 cd passplus-website-build
 npm install
 npm run dev
 ```
 
-Later updates (no need to re-download ZIP):
-
-```bash
-cd passplus-website-build
-git pull origin cursor/passplus-motorcycle-website-b70f
-npm run dev
-```
-
 Open http://localhost:5173/ and hard-refresh with `Ctrl + Shift + R`.
 
+Later updates:
+
+```bash
+git pull origin main
+npm run dev
+```
 
 ## Build
 
@@ -38,25 +38,25 @@ npm run build
 npm run preview
 ```
 
-## Contact placeholders to update
+## Custom domain (Namecheap)
+
+Domain: `passplusmotorcyclehk.com`
+
+In Namecheap → Advanced DNS, set:
+
+| Type | Host | Value |
+|------|------|-------|
+| A | `@` | `185.199.108.153` |
+| A | `@` | `185.199.109.153` |
+| A | `@` | `185.199.110.153` |
+| A | `@` | `185.199.111.153` |
+| CNAME | `www` | `passplusmotorcycle.github.io.` |
+
+Then in GitHub → Settings → Pages → Custom domain: `passplusmotorcyclehk.com` → Save → enable **Enforce HTTPS**.
+
+See `UPDATE.md` for Chinese step-by-step instructions.
+
+## Notes
 
 - Social links: Instagram, Facebook, and Threads are wired on the homepage contact section.
 - Replace `public/hero-motorcycle.jpg` with your own training photos when ready.
-
-
-## Public website (GitHub Pages)
-
-Live URL after setup:
-
-**https://passplusmotorcycle.github.io/passplus-website-build/**
-
-### One-time setup (repo owner — required)
-
-The deploy workflow **build already succeeds**. Deploy fails until Pages is enabled. On a free GitHub account the repo must also be **public** so visitors can open the site without logging in.
-
-1. **Make the repository public** (Settings → Danger Zone → Change visibility → Public)
-2. **Enable Pages**: https://github.com/passplusmotorcycle/passplus-website-build/settings/pages → Source = **GitHub Actions** → Save
-3. **Merge the PR into `main`**: https://github.com/passplusmotorcycle/passplus-website-build/pull/1 → Merge pull request  
-   (Pages only allows deploys from `main`; feature-branch deploys are blocked by environment rules.)
-
-After merge, Actions will deploy automatically. Anyone with the link can open the site.
