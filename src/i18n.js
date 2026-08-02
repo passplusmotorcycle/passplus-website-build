@@ -19,7 +19,8 @@ export const dict = {
       brand: 'PassPlus',
       tagline: 'Motorcycle training Service',
       headline: '一對一電單車訓練，陪你穩妥上牌',
-      support: '主打天光道與掃桿埔路試訓練，鼓勵式教學，粵／英／普通話同價。',
+      support:
+        '鼓勵式教學，耐心引導每一步，用清晰回饋建立信心，陪你穩妥走進路試。',
     },
     services: {
       eyebrow: '課程收費',
@@ -61,6 +62,12 @@ export const dict = {
           price: '$0',
           note: '未進行強制試／路試前',
           desc: '未開始強制試或路試前，免費解答考牌疑問。',
+        },
+        {
+          name: '租車考試費',
+          price: '查詢',
+          note: '考試當日',
+          desc: '路試當日租用訓練車輛應考（詳情以 WhatsApp 查詢為準）。',
         },
       ],
       venues: '主要訓練／考試場地：天光道、掃桿埔',
@@ -193,7 +200,7 @@ export const dict = {
       tagline: 'Motorcycle training Service',
       headline: 'One-to-one motorcycle training that gets you road-ready',
       support:
-        'Focused road-test coaching for Tin Kwong Road & So Kon Po, with encouraging teaching in Cantonese, English or Mandarin.',
+        'Encouraging coaching with clear feedback — patient guidance that builds real confidence for your road test.',
     },
     services: {
       eyebrow: 'Courses & Fees',
@@ -204,7 +211,7 @@ export const dict = {
           name: 'Instructor Lesson',
           price: '$850',
           note: 'Add $100 to upgrade to a mock test lesson',
-          desc: 'One-to-one coaching for road-test readiness after the competence test.',
+          desc: 'One-to-one coaching for road-test readiness after the mandatory test.',
         },
         {
           name: 'Self Practice (Bike Rental)',
@@ -233,8 +240,14 @@ export const dict = {
         {
           name: 'Licence Consultation',
           price: '$0',
-          note: 'Before competence / road test',
-          desc: 'Free guidance before you start the competence test or road test stage.',
+          note: 'Before mandatory / road test',
+          desc: 'Free guidance before you start the mandatory test or road test stage.',
+        },
+        {
+          name: 'Exam Bike Rental',
+          price: 'On request',
+          note: 'Exam day',
+          desc: 'Rent a training bike for your road-test appointment (confirm details via WhatsApp).',
         },
       ],
       venues: 'Main training / test areas: Tin Kwong Road & So Kon Po',
@@ -256,7 +269,7 @@ export const dict = {
       title: 'Wherever you are in the journey, we can help',
       items: [
         'People with no driving licence yet',
-        'Candidates who have passed the competence test and are preparing for the road test',
+        'Candidates who have passed the mandatory test and are preparing for the road test',
         'Licensed riders who have not ridden for years',
         'Riders who lack confidence riding alone on public roads',
         'Overseas licence holders issued a Hong Kong licence without a test',
@@ -283,12 +296,12 @@ export const dict = {
       tdNote: 'Process summary is based on publicly available Transport Department information and may change.',
       whereWeHelp: 'Where PassPlus helps most',
       whereWeHelpDesc:
-        'Road-test coaching after the competence test — instructor lessons, bike rental practice, mock tests, and refresher / overseas-licence road training.',
+        'Road-test coaching after the mandatory test — instructor lessons, bike rental practice, mock tests, and refresher / overseas-licence road training.',
       steps: [
         {
           num: '01',
           title: 'Submit application',
-          desc: 'Complete form TD 82 and arrange Part A (written) and Part B (competence) through a designated driving school.',
+          desc: 'Complete form TD 82 and arrange Part A (written) and Part B (mandatory test) through a designated driving school.',
         },
         {
           num: '02',
@@ -302,7 +315,7 @@ export const dict = {
         },
         {
           num: '04',
-          title: 'Part B — Competence test',
+          title: 'Part B — Mandatory test',
           desc: 'On-site assessment covering start/stop, left turn, right turn and emergency stop.',
         },
         {
@@ -330,12 +343,12 @@ export const dict = {
       faqTitle: 'Quick answers',
       faqs: [
         {
-          q: 'Must competence and road tests be bundled?',
+          q: 'Must the mandatory test and road test be bundled?',
           a: 'No. Part A and Part B are arranged together; after passing Part B you may apply for Part C yourself and train with a private instructor.',
         },
         {
           q: 'When should I contact PassPlus?',
-          a: 'Most students start after passing the competence test and having (or soon having) a road-test date. Free consultation is available before that stage too.',
+          a: 'Most students start after passing the mandatory test and having (or soon having) a road-test date. Free consultation is available before that stage too.',
         },
         {
           q: 'Which test centres do you focus on?',
