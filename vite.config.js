@@ -1,11 +1,9 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
-// GitHub Pages project site: https://passplusmotorcycle.github.io/passplus-website-build/
-const base = process.env.GITHUB_PAGES === 'true' ? '/passplus-website-build/' : '/';
-
+// Custom domain serves at site root: https://passplusmotorcyclehk.com/
 export default defineConfig({
-  base,
+  base: '/',
   build: {
     rollupOptions: {
       input: {
