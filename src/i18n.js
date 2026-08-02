@@ -65,9 +65,9 @@ export const dict = {
         },
         {
           name: '租車考試費',
-          price: '查詢',
+          price: '$500',
           note: '考試當日',
-          desc: '路試當日租用訓練車輛應考（詳情以 WhatsApp 查詢為準）。',
+          desc: '路試當日租用訓練車輛應考。',
         },
       ],
       venues: '主要訓練／考試場地：天光道、掃桿埔',
@@ -245,9 +245,9 @@ export const dict = {
         },
         {
           name: 'Exam Bike Rental',
-          price: 'On request',
+          price: '$500',
           note: 'Exam day',
-          desc: 'Rent a training bike for your road-test appointment (confirm details via WhatsApp).',
+          desc: 'Rent a training bike for your road-test appointment.',
         },
       ],
       venues: 'Main training / test areas: Tin Kwong Road & So Kon Po',
