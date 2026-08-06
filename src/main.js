@@ -50,6 +50,7 @@ function applyI18n(lang) {
   renderAudience(lang);
   renderProcess(lang);
   renderFaqs(lang);
+  renderCalculator(lang);
 
   const td = document.querySelector('[data-td-link]');
   if (td) td.href = lang === 'zh' ? TD_ZH : TD_EN;
@@ -139,6 +140,82 @@ function renderFaqs(lang) {
   observeReveals();
 }
 
+function formatMoney(value) {
+  return `$${Math.round(value).toLocaleString('en-HK')}`;
+}
+
+function numberValue(field, max) {
+  const value = Number.parseInt(field?.value || '0', 10);
+  return Math.min(Math.max(Number.isFinite(value) ? value : 0, 0), max);
+}
+
+function renderCalculator(lang = getLang()) {
+  const root = document.querySelector('[data-calculator]');
+  const form = root?.querySelector('[data-calculator-form]');
+  if (!root || !form) return;
+
+  const stage = form.elements.stage.value;
+  const trainingMode = form.elements.trainingMode.value;
+  const academyGroup = root.querySelector('[data-academy-group]');
+  const packageOptions = root.querySelector('[data-package-options]');
+  const customOptions = root.querySelector('[data-custom-options]');
+
+  const academyCost = stage === 'beginner' ? numberValue(form.elements.academy, 10000) : 0;
+  const learnerCost = form.elements.learnerLicence.checked ? 548 : 0;
+  const roadTestFormCost = form.elements.roadTestForm.checked ? 510 : 0;
+
+  academyGroup.hidden = stage !== 'beginner';
+  packageOptions.hidden = trainingMode !== 'package';
+  customOptions.hidden = trainingMode !== 'custom';
+
+  let trainingCost = 0;
+  let upgradeCost = 0;
+  let trainingLabel = dict[lang].calculator.packageBreakdown;
+
+  if (trainingMode === 'package') {
+    const upgrades = numberValue(form.elements.mockUpgrades, 4);
+    trainingCost = 4700;
+    upgradeCost = upgrades * 100;
+  } else {
+    const instructorLessons = numberValue(form.elements.instructorLessons, 20);
+    const selfLessons = numberValue(form.elements.selfLessons, 20);
+    const mockLessons = numberValue(form.elements.mockLessons, 10);
+    const examRental = form.elements.examRental.checked ? 500 : 0;
+    trainingCost = instructorLessons * 850 + selfLessons * 400 + mockLessons * 950 + examRental;
+    trainingLabel = dict[lang].calculator.customBreakdown;
+  }
+
+  const rows = [];
+  if (academyCost) rows.push([dict[lang].calculator.academyBreakdown, academyCost]);
+  if (learnerCost) rows.push([dict[lang].calculator.learnerBreakdown, learnerCost]);
+  if (roadTestFormCost) rows.push([dict[lang].calculator.roadTestFormBreakdown, roadTestFormCost]);
+  rows.push([trainingLabel, trainingCost]);
+  if (upgradeCost) rows.push([dict[lang].calculator.upgradeBreakdown, upgradeCost]);
+
+  const total = academyCost + learnerCost + roadTestFormCost + trainingCost + upgradeCost;
+  root.querySelector('[data-estimate-total]').textContent = formatMoney(total);
+  root.querySelector('[data-estimate-breakdown]').innerHTML = rows
+    .map(([label, value]) => `<div><dt>${label}</dt><dd>${formatMoney(value)}</dd></div>`)
+    .join('');
+}
+
+function wireCalculator() {
+  const form = document.querySelector('[data-calculator-form]');
+  if (!form) return;
+
+  const update = () => renderCalculator(getLang());
+  form.addEventListener('change', update);
+  form.addEventListener('input', (event) => {
+    if (event.target instanceof HTMLInputElement && event.target.type === 'number') {
+      const min = Number(event.target.min || 0);
+      const max = Number(event.target.max || 20);
+      const value = Number.parseInt(event.target.value || '0', 10);
+      if (Number.isFinite(value)) event.target.value = String(Math.min(Math.max(value, min), max));
+    }
+    update();
+  });
+}
+
 function observeReveals() {
   const nodes = document.querySelectorAll('.reveal:not(.is-in)');
   if (!nodes.length) return;
@@ -210,4 +287,5 @@ function wireChrome() {
 }
 
 wireChrome();
+wireCalculator();
 setLang(getLang());

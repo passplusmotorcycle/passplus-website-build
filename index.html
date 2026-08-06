@@ -31,6 +31,7 @@
         <nav aria-label="Primary">
           <ul class="nav-links">
             <li><a href="#services" data-i18n="nav.services"></a></li>
+            <li><a href="#calculator" data-i18n="nav.calculator"></a></li>
             <li><a href="#why" data-i18n="nav.why"></a></li>
             <li><a href="./process.html" data-i18n="nav.process"></a></li>
             <li><a href="#audience" data-i18n="nav.audience"></a></li>
@@ -55,6 +56,7 @@
 
       <div class="mobile-panel" id="mobile-panel" data-mobile-panel>
         <a href="#services" data-i18n="nav.services"></a>
+        <a href="#calculator" data-i18n="nav.calculator"></a>
         <a href="#why" data-i18n="nav.why"></a>
         <a href="./process.html" data-i18n="nav.process"></a>
         <a href="#audience" data-i18n="nav.audience"></a>
@@ -85,6 +87,144 @@
         <div class="meta-strip">
           <span data-i18n="services.venues"></span>
           <span data-i18n="services.hours"></span>
+        </div>
+      </section>
+
+      <section class="section calculator-section" id="calculator">
+        <p class="eyebrow" data-i18n="calculator.eyebrow"></p>
+        <h2 data-i18n="calculator.title"></h2>
+        <p class="section-lead" data-i18n="calculator.support"></p>
+
+        <div class="calculator-shell" data-calculator>
+          <form class="calculator-form" data-calculator-form>
+            <fieldset class="calculator-group">
+              <legend data-i18n="calculator.stageLabel"></legend>
+              <div class="choice-grid">
+                <label class="choice-card">
+                  <input type="radio" name="stage" value="beginner" checked />
+                  <span>
+                    <strong data-i18n="calculator.stageBeginner"></strong>
+                    <small data-i18n="calculator.stageBeginnerNote"></small>
+                  </span>
+                </label>
+                <label class="choice-card">
+                  <input type="radio" name="stage" value="passed" />
+                  <span>
+                    <strong data-i18n="calculator.stagePassed"></strong>
+                    <small data-i18n="calculator.stagePassedNote"></small>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="calculator-group" data-academy-group>
+              <label for="academy" class="calculator-label" data-i18n="calculator.academyLabel"></label>
+              <select id="academy" name="academy">
+                <option value="3460" data-i18n="calculator.academyIsland"></option>
+                <option value="3410" data-i18n="calculator.academyKwunTong"></option>
+                <option value="3390" data-i18n="calculator.academyShaTin"></option>
+              </select>
+              <p class="field-note" data-i18n="calculator.academyNote"></p>
+            </div>
+
+            <div class="calculator-group">
+              <p class="calculator-label" data-i18n="calculator.govDocsLabel"></p>
+              <p class="field-note" data-i18n="calculator.govDocsNote"></p>
+              <label class="check-row">
+                <input type="checkbox" name="learnerLicence" checked />
+                <span>
+                  <strong data-i18n="calculator.learnerLicence"></strong>
+                  <small data-i18n="calculator.learnerLicenceNote"></small>
+                </span>
+                <b>$548</b>
+              </label>
+              <label class="check-row">
+                <input type="checkbox" name="roadTestForm" checked />
+                <span>
+                  <strong data-i18n="calculator.roadTestForm"></strong>
+                  <small data-i18n="calculator.roadTestFormNote"></small>
+                </span>
+                <b>$510</b>
+              </label>
+            </div>
+
+            <fieldset class="calculator-group">
+              <legend data-i18n="calculator.trainingLabel"></legend>
+              <div class="choice-grid">
+                <label class="choice-card">
+                  <input type="radio" name="trainingMode" value="package" checked />
+                  <span>
+                    <strong data-i18n="calculator.packageTitle"></strong>
+                    <small data-i18n="calculator.packageIncludes"></small>
+                  </span>
+                </label>
+                <label class="choice-card">
+                  <input type="radio" name="trainingMode" value="custom" />
+                  <span>
+                    <strong data-i18n="calculator.customTitle"></strong>
+                    <small data-i18n="calculator.customNote"></small>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="package-options" data-package-options>
+              <div class="package-highlight">
+                <div>
+                  <span data-i18n="calculator.packagePriceLabel"></span>
+                  <strong>$4,700</strong>
+                </div>
+                <span class="saving-badge" data-i18n="calculator.packageSaving"></span>
+              </div>
+              <label for="mockUpgrades" class="calculator-label" data-i18n="calculator.mockUpgradeLabel"></label>
+              <select id="mockUpgrades" name="mockUpgrades">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+              <p class="field-note" data-i18n="calculator.mockUpgradeNote"></p>
+            </div>
+
+            <div class="custom-options" data-custom-options hidden>
+              <div class="quantity-row">
+                <label for="instructorLessons">
+                  <strong data-i18n="calculator.instructorLessons"></strong>
+                  <small data-i18n="calculator.instructorPrice"></small>
+                </label>
+                <input id="instructorLessons" name="instructorLessons" type="number" min="0" max="20" value="4" />
+              </div>
+              <div class="quantity-row">
+                <label for="selfLessons">
+                  <strong data-i18n="calculator.selfLessons"></strong>
+                  <small data-i18n="calculator.selfPrice"></small>
+                </label>
+                <input id="selfLessons" name="selfLessons" type="number" min="0" max="20" value="3" />
+              </div>
+              <div class="quantity-row">
+                <label for="mockLessons">
+                  <strong data-i18n="calculator.mockLessons"></strong>
+                  <small data-i18n="calculator.mockPrice"></small>
+                </label>
+                <input id="mockLessons" name="mockLessons" type="number" min="0" max="10" value="0" />
+              </div>
+              <label class="check-row compact">
+                <input type="checkbox" name="examRental" checked />
+                <span><strong data-i18n="calculator.examRental"></strong></span>
+                <b>$500</b>
+              </label>
+            </div>
+          </form>
+
+          <aside class="calculator-result" aria-live="polite">
+            <p class="eyebrow" data-i18n="calculator.estimateLabel"></p>
+            <div class="estimate-total" data-estimate-total>$9,218</div>
+            <p class="estimate-caption" data-i18n="calculator.estimateCaption"></p>
+            <dl class="estimate-breakdown" data-estimate-breakdown></dl>
+            <p class="estimate-disclaimer" data-i18n="calculator.disclaimer"></p>
+            <a class="btn btn-primary" data-whatsapp data-i18n="calculator.cta"></a>
+          </aside>
         </div>
       </section>
 
