@@ -7,7 +7,12 @@
 - [ ] 真實教學相片（集合點／上堂／練習路線，需獲同意）
 - [ ] 學員評價（文字或截圖，需獲同意公開）
 
-## 追蹤（等你決定）
-- [ ] 是否安裝 Google Analytics（GA4）
-- [ ] 如要：提供 Measurement ID（格式通常是 `G-XXXXXXXX`）
-- [ ] 確認可顯示「私隱／Cookie 同意」橫幅後才開始收集數據
+## 追蹤（已選 B：要裝 GA4）
+- Measurement ID：`G-HHZ3X3VJYD`（已寫入 `src/site.js`）
+- 同意橫幅同意後先載入 GA；唔使喺 GA 頁面手動貼 gtag 代碼
+
+### 會追蹤嘅事件（同意後）
+- page_view
+- whatsapp_click
+- calculator_update
+- language_switch

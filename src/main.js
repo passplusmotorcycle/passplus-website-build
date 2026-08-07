@@ -1,4 +1,5 @@
 import './styles.css';
+import { initAnalytics, track } from './analytics.js';
 import { dict } from './i18n.js';
 import { formatHkd, packageSaving, pricing } from './pricing.js';
 
@@ -259,6 +260,7 @@ function getEstimate(lang = getLang()) {
   const academyCost = stage === 'beginner' ? numberValue(form.elements.academy, 10000) : 0;
   const learnerCost = form.elements.learnerLicence.checked ? pricing.learnerLicence : 0;
   const roadTestFormCost = form.elements.roadTestForm.checked ? pricing.roadTestForm : 0;
+  const agencyCost = form.elements.agencyService?.checked ? pricing.agencyService : 0;
 
   if (academyGroup) academyGroup.hidden = stage !== 'beginner';
   if (packageOptions) packageOptions.hidden = trainingMode !== 'package';
@@ -291,10 +293,12 @@ function getEstimate(lang = getLang()) {
   if (academyCost) rows.push([dict[lang].calculator.academyBreakdown, academyCost]);
   if (learnerCost) rows.push([dict[lang].calculator.learnerBreakdown, learnerCost]);
   if (roadTestFormCost) rows.push([dict[lang].calculator.roadTestFormBreakdown, roadTestFormCost]);
+  if (agencyCost) rows.push([dict[lang].calculator.agencyBreakdown, agencyCost]);
   rows.push([trainingLabel, trainingCost]);
   if (upgradeCost) rows.push([dict[lang].calculator.upgradeBreakdown, upgradeCost]);
 
-  const total = academyCost + learnerCost + roadTestFormCost + trainingCost + upgradeCost;
+  const total =
+    academyCost + learnerCost + roadTestFormCost + agencyCost + trainingCost + upgradeCost;
   const stageShort =
     stage === 'beginner'
       ? dict[lang].calculator.stageBeginnerShort
@@ -346,6 +350,17 @@ function syncWhatsAppLinks() {
     el.href = buildWhatsAppUrl(placement === '' ? 'general' : placement);
     el.target = '_blank';
     el.rel = 'noopener noreferrer';
+    if (!el.dataset.trackBound) {
+      el.dataset.trackBound = '1';
+      el.addEventListener('click', () => {
+        track('whatsapp_click', {
+          placement: el.getAttribute('data-whatsapp') || 'general',
+          language: getLang(),
+          source: sourceLabel(),
+          estimate_total: lastEstimate?.total ?? undefined,
+        });
+      });
+    }
   });
 }
 
@@ -353,8 +368,22 @@ function wireCalculator() {
   const form = document.querySelector('[data-calculator-form]');
   if (!form) return;
 
-  const update = () => renderCalculator(getLang());
-  form.addEventListener('change', update);
+  let interacted = false;
+  const update = () => {
+    renderCalculator(getLang());
+    if (interacted && lastEstimate) {
+      track('calculator_update', {
+        language: getLang(),
+        total: lastEstimate.total,
+        stage: lastEstimate.stageShort,
+        training: lastEstimate.trainingShort,
+      });
+    }
+  };
+  form.addEventListener('change', () => {
+    interacted = true;
+    update();
+  });
   form.addEventListener('input', (event) => {
     if (event.target instanceof HTMLInputElement && event.target.type === 'number') {
       const min = Number(event.target.min || 0);
@@ -362,6 +391,7 @@ function wireCalculator() {
       const value = Number.parseInt(event.target.value || '0', 10);
       if (Number.isFinite(value)) event.target.value = String(Math.min(Math.max(value, min), max));
     }
+    interacted = true;
     update();
   });
 }
@@ -418,8 +448,11 @@ function wireChrome() {
     langBtn.addEventListener('click', () => {
       const next = getLang() === 'zh' ? 'en' : 'zh';
       setLang(next);
+      track('language_switch', { language: next });
     });
   });
+
+  initAnalytics();
 
   const menuBtn = document.querySelector('[data-menu-toggle]');
   const panel = document.querySelector('[data-mobile-panel]');

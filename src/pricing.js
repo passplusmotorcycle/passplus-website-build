@@ -6,6 +6,7 @@ export const pricing = {
   email: 'passplusmotorcyclehk@gmail.com',
   learnerLicence: 548,
   roadTestForm: 510,
+  agencyService: 100,
   corePackage: 4700,
   corePackageList: 5100,
   mockUpgrade: 100,
