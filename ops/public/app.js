@@ -97,10 +97,75 @@ function renderStudents() {
             <span class="status">${text(lesson.status)}</span>
             <h3>${text(student?.name)} · ${text(type?.labelZh)}</h3>
             <p>${formatDate(lesson.scheduledStart)} · ${text(location?.labelZh)}</p>
+            <div class="actions" data-lesson-actions="${lesson.id}">
+              <button type="button" class="secondary" data-reschedule>改期草稿</button>
+              <button type="button" class="secondary" data-weather>天氣通知草稿</button>
+              <button type="button" data-confirm>標記已確認</button>
+              <button type="button" data-complete>標記已完成</button>
+              <button type="button" class="danger" data-cancel>記錄取消</button>
+            </div>
           </article>`;
         })
         .join('')
     : '<div class="empty">未建立課堂</div>';
+
+  $$('[data-lesson-actions]').forEach((actions) => {
+    const lessonId = actions.dataset.lessonActions;
+    $('[data-reschedule]', actions).addEventListener('click', () => draftReschedule(lessonId));
+    $('[data-weather]', actions).addEventListener('click', () => draftNotice(lessonId, 'weather'));
+    $('[data-confirm]', actions).addEventListener('click', () => updateLessonStatus(lessonId, 'confirmed'));
+    $('[data-complete]', actions).addEventListener('click', () => updateLessonStatus(lessonId, 'completed'));
+    $('[data-cancel]', actions).addEventListener('click', () => updateLessonStatus(lessonId, 'cancelled'));
+  });
+}
+
+async function draftReschedule(lessonId) {
+  const preferredStart = window.prompt('輸入最早可行時間，例如 2026-08-10T09:00');
+  if (!preferredStart) return;
+  const parsed = new Date(preferredStart);
+  if (!Number.isFinite(parsed.getTime())) return notice('日期格式不正確。', true);
+  try {
+    await api('/api/agent/operations/draft-reschedule', {
+      method: 'POST',
+      body: JSON.stringify({ lessonId, preferredStart: parsed.toISOString(), notes: '' }),
+    });
+    notice('已建立改期草稿，原有時段未被更改。');
+    await load();
+    $('[data-tab="approvals"]').click();
+  } catch (error) {
+    notice(error.message, true);
+  }
+}
+
+async function draftNotice(lessonId, noticeType) {
+  const notes = window.prompt('請輸入供真人審核嘅通知內容');
+  if (!notes) return;
+  try {
+    await api('/api/agent/operations/draft-notice', {
+      method: 'POST',
+      body: JSON.stringify({ lessonId, noticeType, notes }),
+    });
+    notice('已建立高風險通知草稿，課堂安排未被更改。');
+    await load();
+    $('[data-tab="approvals"]').click();
+  } catch (error) {
+    notice(error.message, true);
+  }
+}
+
+async function updateLessonStatus(lessonId, status) {
+  const reason = status === 'cancelled' ? window.prompt('取消原因（必填）') : '';
+  if (status === 'cancelled' && !reason) return;
+  try {
+    await api(`/api/lessons/${lessonId}/status`, {
+      method: 'POST',
+      body: JSON.stringify({ status, reason }),
+    });
+    notice(`課堂已標記為 ${status}。`);
+    await load();
+  } catch (error) {
+    notice(error.message, true);
+  }
 }
 
 function renderWorkflows() {
@@ -122,7 +187,17 @@ function renderWorkflows() {
     const node = $('[data-workflow-template]').content.cloneNode(true);
     const card = $('.workflow', node);
     const student = state.data.students.find((item) => item.id === workflow.studentId);
-    $('[data-workflow-title]', card).textContent = `${student?.name ?? '學員'} · 排堂建議`;
+    const workflowLabels = {
+      schedule_lesson: '排堂建議',
+      reschedule_lesson: '改期建議',
+      lesson_reminder: '課堂提醒',
+      weather_notice: '天氣安排',
+      late_notice: '遲到安排',
+      cancellation_notice: '取消安排',
+      vehicle_change_notice: '車輛更改',
+    };
+    $('[data-workflow-title]', card).textContent =
+      `${student?.name ?? '學員'} · ${workflowLabels[workflow.type] ?? workflow.type}`;
     $('[data-created]', card).textContent = formatDate(workflow.createdAt);
     $('.status', card).textContent =
       workflow.status === 'pending_approval'
@@ -137,6 +212,7 @@ function renderWorkflows() {
           `<option value="${slot}" ${slot === workflow.selectedSlot ? 'selected' : ''}>${formatDate(slot)}</option>`
       )
       .join('');
+    select.parentElement.hidden = workflow.proposedSlots.length === 0;
     const draft = $('[data-draft]', card);
     draft.value = workflow.draftContent;
     const escalation = $('[data-escalation]', card);
@@ -291,6 +367,19 @@ $('[data-schedule-form]').addEventListener('submit', async (event) => {
 });
 
 $('[data-refresh]').addEventListener('click', () => load().catch((error) => notice(error.message, true)));
+$('[data-draft-reminders]').addEventListener('click', async () => {
+  try {
+    const result = await api('/api/agent/operations/draft-reminders', {
+      method: 'POST',
+      body: '{}',
+    });
+    notice(`已建立 ${result.created} 個提醒草稿；未有訊息發送。`);
+    await load();
+    $('[data-tab="approvals"]').click();
+  } catch (error) {
+    notice(error.message, true);
+  }
+});
 $('[data-token]').value = state.token;
 
 const tomorrow = new Date(Date.now() + 24 * 60 * 60_000);
