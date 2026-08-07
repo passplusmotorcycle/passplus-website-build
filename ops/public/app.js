@@ -337,10 +337,11 @@ $('[data-save-token]').addEventListener('click', async () => {
 
 $('[data-student-form]').addEventListener('submit', async (event) => {
   event.preventDefault();
-  const input = Object.fromEntries(new FormData(event.currentTarget));
+  const form = event.currentTarget;
+  const input = Object.fromEntries(new FormData(form));
   try {
     await api('/api/students', { method: 'POST', body: JSON.stringify(input) });
-    event.currentTarget.reset();
+    form.reset();
     notice('學員已儲存。');
     await load();
   } catch (error) {

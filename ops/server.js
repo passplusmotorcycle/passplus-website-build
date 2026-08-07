@@ -92,11 +92,13 @@ function createEntity(input, required, extra = {}) {
 
 async function serveStatic(pathname, res) {
   const file = pathname === '/' ? 'index.html' : pathname.slice(1);
-  if (!['index.html', 'app.js', 'styles.css'].includes(file)) return false;
+  if (!['index.html', 'app.js', 'styles.css', 'favicon.svg'].includes(file)) return false;
   const mime = file.endsWith('.js')
     ? 'text/javascript; charset=utf-8'
     : file.endsWith('.css')
       ? 'text/css; charset=utf-8'
+      : file.endsWith('.svg')
+        ? 'image/svg+xml'
       : 'text/html; charset=utf-8';
   const content = await readFile(path.join(publicDir, file));
   res.writeHead(200, {
