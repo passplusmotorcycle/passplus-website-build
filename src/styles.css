@@ -4,9 +4,11 @@
 /* hero image imported via CSS relative path below */
 
 :root {
-  --green: #2db84b;
-  --green-deep: #1f9a3a;
-  --green-soft: rgba(45, 184, 75, 0.14);
+  --green: #15803d;
+  --green-deep: #166534;
+  --green-soft: rgba(21, 128, 61, 0.14);
+  --green-btn: #166534;
+  --green-btn-hover: #14532d;
   --navy: #0b1f3a;
   --navy-2: #132a4a;
   --ink: #0b1f3a;
@@ -33,12 +35,18 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   margin: 0;
   color: var(--ink);
   font-family: var(--font-body);
   background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(45, 184, 75, 0.18), transparent 55%),
+    radial-gradient(1200px 600px at 80% -10%, rgba(21, 128, 61, 0.16), transparent 55%),
     radial-gradient(900px 500px at -10% 20%, rgba(19, 42, 74, 0.12), transparent 50%),
     linear-gradient(180deg, #eef3f6 0%, #f7fafb 40%, #eef2f5 100%);
   line-height: 1.55;
@@ -207,12 +215,12 @@ button,
 }
 
 .btn-primary {
-  background: var(--green);
+  background: var(--green-btn);
   color: var(--white);
 }
 
 .btn-primary:hover {
-  background: var(--green-deep);
+  background: var(--green-btn-hover);
 }
 
 .btn-secondary {
@@ -238,6 +246,92 @@ button,
   background: var(--white);
   color: var(--navy);
   border-color: var(--line);
+}
+
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.lang-toggle:focus-visible,
+.menu-toggle:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 2px;
+}
+
+.contact-social-label {
+  margin-top: 1.75rem;
+}
+
+.sticky-cta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid var(--line);
+  transform: translateY(110%);
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+
+.sticky-cta.is-visible {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.sticky-cta-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.sticky-cta-simple {
+  justify-content: stretch;
+}
+
+.sticky-cta-simple .btn {
+  width: 100%;
+}
+
+.sticky-estimate {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.sticky-estimate span {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sticky-estimate strong {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--navy);
+}
+
+.sticky-cta .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (min-width: 981px) {
+  .sticky-cta {
+    display: none;
+  }
+}
+
+body {
+  padding-bottom: 0;
 }
 
 .hero {
@@ -993,7 +1087,7 @@ button,
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 980px) {
   .nav-links,
   .nav-actions .btn {
     display: none;
@@ -1042,5 +1136,9 @@ button,
 
   .flow::before {
     left: calc(1.25rem + 1.3rem);
+  }
+
+  body.has-sticky-space {
+    padding-bottom: 5.5rem;
   }
 }

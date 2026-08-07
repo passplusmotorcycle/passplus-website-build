@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Hong Kong motorcycle licence process visual guide — PassPlus Motorcycle HK."
+      content="A step-by-step guide to getting a motorcycle licence in Hong Kong from PassPlus Motorcycle HK."
     />
     <link rel="icon" type="image/png" href="./logo-exact-match.png?v=15" />
     <title>電單車考牌流程｜PassPlus Motorcycle HK</title>
@@ -14,7 +14,7 @@
     data-title-zh="電單車考牌流程｜PassPlus Motorcycle HK"
     data-title-en="Motorcycle Licence Process | PassPlus Motorcycle HK"
   >
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
 
     <header class="site-header">
       <div class="nav-wrap">
@@ -22,7 +22,7 @@
           <img
             class="brand-full"
             src="./logo-exact-match.png?v=15"
-            alt="PassPlus Motorcycle training Service"
+            alt="PassPlus Motorcycle Training"
             width="220"
             height="82"
           />
@@ -41,13 +41,14 @@
 
         <div class="nav-actions">
           <button type="button" class="lang-toggle" data-lang-toggle>EN</button>
-          <a class="btn btn-primary" data-whatsapp data-i18n="cta.whatsapp"></a>
+          <a class="btn btn-primary" data-whatsapp="header" data-i18n="cta.whatsapp"></a>
           <button
             type="button"
             class="menu-toggle"
             data-menu-toggle
             aria-expanded="false"
             aria-controls="mobile-panel"
+            data-i18n="menu"
           >
             Menu
           </button>
@@ -61,7 +62,7 @@
         <a href="./process.html" data-i18n="nav.process"></a>
         <a href="./index.html#audience" data-i18n="nav.audience"></a>
         <a href="./index.html#contact" data-i18n="nav.contact"></a>
-        <a class="btn btn-primary" data-whatsapp data-i18n="cta.whatsapp"></a>
+        <a class="btn btn-primary" data-whatsapp="mobile-menu" data-i18n="cta.whatsapp"></a>
         <button type="button" class="lang-toggle" data-lang-toggle>EN</button>
       </div>
     </header>
@@ -80,7 +81,7 @@
             rel="noopener noreferrer"
             data-i18n="processPage.tdLink"
           ></a>
-          <a class="btn btn-ghost" data-whatsapp data-i18n="cta.freeConsult"></a>
+          <a class="btn btn-ghost" data-whatsapp="process" data-i18n="cta.freeConsult"></a>
         </div>
         <p class="td-note" data-i18n="processPage.tdNote"></p>
       </section>
@@ -107,6 +108,12 @@
         <p class="footer-note" data-i18n="footer.disclaimer"></p>
       </div>
     </footer>
+
+    <div class="sticky-cta" data-sticky-cta>
+      <div class="sticky-cta-inner sticky-cta-simple">
+        <a class="btn btn-primary" data-whatsapp="sticky" data-i18n="stickyWhatsapp"></a>
+      </div>
+    </div>
 
     <script type="module" src="./src/main.js"></script>
   </body>

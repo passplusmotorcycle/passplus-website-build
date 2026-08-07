@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="PassPlus Motorcycle HK — one-to-one motorcycle training with encouraging coaching. Cantonese, English, Mandarin."
+      content="PassPlus Motorcycle HK offers patient, one-to-one motorcycle training in Cantonese, English and Mandarin."
     />
     <link rel="icon" type="image/png" href="./logo-exact-match.png?v=15" />
     <title>PassPlus Motorcycle HK｜電單車訓練</title>
@@ -14,7 +14,7 @@
     data-title-zh="PassPlus Motorcycle HK｜電單車訓練"
     data-title-en="PassPlus Motorcycle HK | Motorcycle Training"
   >
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
 
     <header class="site-header">
       <div class="nav-wrap">
@@ -22,7 +22,7 @@
           <img
             class="brand-full"
             src="./logo-exact-match.png?v=15"
-            alt="PassPlus Motorcycle training Service"
+            alt="PassPlus Motorcycle Training"
             width="220"
             height="82"
           />
@@ -41,13 +41,14 @@
 
         <div class="nav-actions">
           <button type="button" class="lang-toggle" data-lang-toggle>EN</button>
-          <a class="btn btn-primary" data-whatsapp data-i18n="cta.whatsapp"></a>
+          <a class="btn btn-primary" data-whatsapp="header" data-i18n="cta.whatsapp"></a>
           <button
             type="button"
             class="menu-toggle"
             data-menu-toggle
             aria-expanded="false"
             aria-controls="mobile-panel"
+            data-i18n="menu"
           >
             Menu
           </button>
@@ -61,7 +62,7 @@
         <a href="./process.html" data-i18n="nav.process"></a>
         <a href="#audience" data-i18n="nav.audience"></a>
         <a href="#contact" data-i18n="nav.contact"></a>
-        <a class="btn btn-primary" data-whatsapp data-i18n="cta.whatsapp"></a>
+        <a class="btn btn-primary" data-whatsapp="mobile-menu" data-i18n="cta.whatsapp"></a>
         <button type="button" class="lang-toggle" data-lang-toggle>EN</button>
       </div>
     </header>
@@ -73,7 +74,7 @@
           <h1 data-i18n="hero.headline"></h1>
           <p class="hero-support" data-i18n="hero.support"></p>
           <div class="hero-ctas">
-            <a class="btn btn-primary" data-whatsapp data-i18n="cta.whatsapp"></a>
+            <a class="btn btn-primary" data-whatsapp="hero" data-i18n="cta.whatsapp"></a>
             <a class="btn btn-secondary" href="./process.html" data-i18n="cta.process"></a>
           </div>
         </div>
@@ -136,7 +137,7 @@
                   <strong data-i18n="calculator.learnerLicence"></strong>
                   <small data-i18n="calculator.learnerLicenceNote"></small>
                 </span>
-                <b>$548</b>
+                <b data-price="learnerLicence">$548</b>
               </label>
               <label class="check-row">
                 <input type="checkbox" name="roadTestForm" checked />
@@ -144,7 +145,7 @@
                   <strong data-i18n="calculator.roadTestForm"></strong>
                   <small data-i18n="calculator.roadTestFormNote"></small>
                 </span>
-                <b>$510</b>
+                <b data-price="roadTestForm">$510</b>
               </label>
             </div>
 
@@ -172,7 +173,7 @@
               <div class="package-highlight">
                 <div>
                   <span data-i18n="calculator.packagePriceLabel"></span>
-                  <strong>$4,700</strong>
+                  <strong data-price="corePackage">$4,700</strong>
                 </div>
                 <span class="saving-badge" data-i18n="calculator.packageSaving"></span>
               </div>
@@ -212,7 +213,7 @@
               <label class="check-row compact">
                 <input type="checkbox" name="examRental" checked />
                 <span><strong data-i18n="calculator.examRental"></strong></span>
-                <b>$500</b>
+                <b data-price="examRental">$500</b>
               </label>
             </div>
           </form>
@@ -223,7 +224,7 @@
             <p class="estimate-caption" data-i18n="calculator.estimateCaption"></p>
             <dl class="estimate-breakdown" data-estimate-breakdown></dl>
             <p class="estimate-disclaimer" data-i18n="calculator.disclaimer"></p>
-            <a class="btn btn-primary" data-whatsapp data-i18n="calculator.cta"></a>
+            <a class="btn btn-primary" data-whatsapp="calculator" data-i18n="calculator.cta"></a>
           </aside>
         </div>
       </section>
@@ -249,11 +250,11 @@
         <div class="contact-panel">
           <div>
             <div class="hero-ctas">
-              <a class="btn btn-primary" data-whatsapp data-i18n="cta.whatsapp"></a>
+              <a class="btn btn-primary" data-whatsapp="contact" data-i18n="cta.whatsapp"></a>
               <a class="btn btn-navy" data-phone data-i18n="cta.call"></a>
               <a class="btn btn-ghost" href="./process.html" data-i18n="cta.process"></a>
             </div>
-            <p class="eyebrow" style="margin-top: 1.75rem" data-i18n="contact.social"></p>
+            <p class="eyebrow contact-social-label" data-i18n="contact.social"></p>
             <div class="social-row">
               <a
                 href="https://www.instagram.com/passplusmotorcyclehk"
@@ -281,11 +282,11 @@
 
           <dl class="contact-facts">
             <div>
-              <dt>WhatsApp / Phone</dt>
+              <dt data-i18n="contactPhoneLabel">WhatsApp / Phone</dt>
               <dd><a data-phone data-i18n="contact.phone"></a></dd>
             </div>
             <div>
-              <dt>Email</dt>
+              <dt data-i18n="contactEmailLabel">Email</dt>
               <dd><a data-email data-i18n="contact.email"></a></dd>
             </div>
             <div>
@@ -309,6 +310,16 @@
         <p class="footer-note" data-i18n="footer.disclaimer"></p>
       </div>
     </footer>
+
+    <div class="sticky-cta" data-sticky-cta>
+      <div class="sticky-cta-inner">
+        <div class="sticky-estimate">
+          <span data-i18n="calculator.stickyEstimate">Estimated total</span>
+          <strong data-sticky-total>$9,218</strong>
+        </div>
+        <a class="btn btn-primary" data-whatsapp="sticky" data-i18n="stickyWhatsapp"></a>
+      </div>
+    </div>
 
     <script type="module" src="./src/main.js"></script>
   </body>
