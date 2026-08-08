@@ -9,9 +9,10 @@ COPY package.json package-lock.json ./
 COPY src ./src
 COPY ops ./ops
 
-RUN mkdir -p /data && chown -R node:node /app /data
+RUN apk add --no-cache su-exec \
+  && mkdir -p /data \
+  && chown -R node:node /app /data
 
-USER node
 EXPOSE 8787
 
-CMD ["npm", "run", "ops:start"]
+CMD ["sh", "-c", "chown -R node:node /data && exec su-exec node npm run ops:start"]
