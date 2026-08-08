@@ -103,7 +103,7 @@ async function serveStatic(pathname, res) {
   const content = await readFile(path.join(publicDir, file));
   res.writeHead(200, {
     'Content-Type': mime,
-    'Cache-Control': file === 'index.html' ? 'no-store' : 'public, max-age=300',
+    'Cache-Control': 'no-store',
     'Content-Security-Policy':
       "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
     'X-Frame-Options': 'DENY',
