@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>PassPlus 營運控制台</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">PASPLUS INTERNAL OPERATIONS</p>
+        <h1>虛擬排堂及營運協調員</h1>
+        <p>AI 只建立草稿；所有訊息及時段必須由真人批准。</p>
+      </div>
+      <div class="policy-badge">Draft only · 不會自動發送</div>
+    </header>
+
+    <main>
+      <section class="token-panel" data-token-panel>
+        <label>
+          管理員 Token（本機開發可留空）
+          <input type="password" data-token autocomplete="current-password" />
+        </label>
+        <button type="button" data-save-token>連接</button>
+      </section>
+
+      <div class="notice" data-notice hidden></div>
+
+      <section class="stats" data-stats aria-label="試行指標"></section>
+
+      <nav class="tabs" aria-label="控制台分頁">
+        <button class="is-active" data-tab="schedule">排堂草稿</button>
+        <button data-tab="approvals">待批准 <span data-pending-count>0</span></button>
+        <button data-tab="students">學員</button>
+        <button data-tab="brief">明日簡報</button>
+        <button data-tab="agents">其他部門</button>
+      </nav>
+
+      <section class="panel is-active" data-panel="schedule">
+        <div class="grid-two">
+          <form class="card" data-student-form>
+            <h2>1. 新增學員</h2>
+            <label>姓名<input name="name" required /></label>
+            <label>WhatsApp<input name="whatsapp" required inputmode="tel" /></label>
+            <label>
+              語言
+              <select name="preferredLanguage">
+                <option value="zh-Hant">繁體中文</option>
+                <option value="en">English</option>
+              </select>
+            </label>
+            <label>
+              考牌階段
+              <select name="licensingStage">
+                <option value="beginner">完全新手</option>
+                <option value="passed_mct">已通過強制試</option>
+                <option value="learner">已有學牌</option>
+                <option value="part_c_booked">已排丙部</option>
+                <option value="licensed">已有牌照</option>
+              </select>
+            </label>
+            <button type="submit">儲存學員</button>
+          </form>
+
+          <form class="card" data-schedule-form>
+            <h2>2. 產生排堂草稿</h2>
+            <label>學員<select name="studentId" data-student-select required></select></label>
+            <label>課堂<select name="lessonType" data-lesson-type required></select></label>
+            <label>地點<select name="locationId" data-location required></select></label>
+            <label>
+              最早可行時間
+              <input type="datetime-local" name="preferredStart" required />
+            </label>
+            <label>
+              客人備註
+              <textarea
+                name="notes"
+                rows="4"
+                placeholder="如涉及退款、投訴、安全、法例或特殊價格，系統會要求額外確認。"
+              ></textarea>
+            </label>
+            <button type="submit">建立 3 個建議時段</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="approvals">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">HUMAN APPROVAL GATE</p>
+            <h2>待批准草稿</h2>
+          </div>
+          <button type="button" class="secondary" data-refresh>重新整理</button>
+        </div>
+        <div class="stack" data-workflows></div>
+      </section>
+
+      <section class="panel" data-panel="students">
+        <div class="section-heading"><h2>學員及營運資料</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>學員</th><th>WhatsApp</th><th>階段</th><th>已購／已用</th></tr>
+            </thead>
+            <tbody data-students></tbody>
+          </table>
+        </div>
+        <h3>已建立課堂</h3>
+        <div class="stack" data-lessons></div>
+      </section>
+
+      <section class="panel" data-panel="brief">
+        <div class="section-heading">
+          <h2>明日課堂與警示</h2>
+          <button type="button" data-draft-reminders>建立 24 小時提醒草稿</button>
+        </div>
+        <div class="grid-three" data-brief></div>
+      </section>
+
+      <section class="panel" data-panel="agents">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CONTROLLED EXPANSION</p>
+            <h2>後續虛擬部門基礎</h2>
+          </div>
+        </div>
+        <div class="grid-two" data-agents></div>
+        <p class="footnote">
+          上述部門目前只有權限與草稿介面定義，未獲准自動執行付款、退款、發訊息或提供法例答案。
+        </p>
+      </section>
+    </main>
+
+    <template data-workflow-template>
+      <article class="card workflow">
+        <div class="workflow-head">
+          <div><span class="status">待批准</span><h3 data-workflow-title></h3></div>
+          <time data-created></time>
+        </div>
+        <div class="escalation" data-escalation hidden></div>
+        <label>
+          選擇時段
+          <select data-slot></select>
+        </label>
+        <label>
+          可編輯訊息草稿
+          <textarea rows="8" data-draft></textarea>
+        </label>
+        <div class="actions">
+          <button type="button" data-approve>批准時段</button>
+          <button type="button" class="secondary" data-copy>複製訊息</button>
+          <button type="button" class="danger" data-reject>拒絕</button>
+        </div>
+        <p class="footnote">批准只會鎖定時段，不會自動發送訊息。</p>
+      </article>
+    </template>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
