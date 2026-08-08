@@ -7,6 +7,7 @@ import { JsonStore } from '../lib/store.js';
 import {
   agentRegistry,
   approveWorkflow,
+  createConfirmedLesson,
   detectEscalations,
   draftLessonReminders,
   draftSchedulingProposal,
@@ -63,6 +64,29 @@ test('grand opening special lesson uses confirmed price and resources', () => {
     needsInstructor: true,
     needsVehicle: true,
   });
+});
+
+test('direct confirmed lesson skips approval and lands on the calendar', async (t) => {
+  const { directory, store } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const data = store.snapshot();
+  const result = createConfirmedLesson(
+    data,
+    {
+      studentId: 'student-1',
+      lessonType: 'grand_opening_special',
+      locationId: 'so_kon_po',
+      scheduledStart: '2030-01-03T04:00:00.000Z',
+      notes: '課堂後現場預約',
+    },
+    'owner'
+  );
+
+  assert.equal(result.lesson.status, 'confirmed');
+  assert.equal(result.lesson.locationId, 'so_kon_po');
+  assert.equal(result.lesson.bookingSource, 'direct_confirmed');
+  assert.equal(result.agentRun.metadata.skippedApproval, true);
+  assert.equal(result.agentRun.metadata.messageSent, false);
 });
 
 test('so kon po bookings keep selected location even when vehicle home base is tin kwong', async (t) => {

@@ -187,16 +187,26 @@ function renderStats() {
 
 function renderSelects() {
   const students = state.data.students;
-  $('[data-student-select]').innerHTML = students.length
+  const studentOptions = students.length
     ? students.map((student) => `<option value="${student.id}">${text(student.name)}</option>`).join('')
     : '<option value="">請先新增學員</option>';
-  $('[data-lesson-type]').innerHTML = Object.entries(state.data.lessonTypes)
+  const lessonOptions = Object.entries(state.data.lessonTypes)
     .map(([id, item]) => `<option value="${id}">${text(item.labelZh)} · HK$${item.priceHkd}</option>`)
     .join('');
-  $('[data-location]').innerHTML = state.data.locations
+  const locationOptions = state.data.locations
     .filter((location) => location.active)
     .map((location) => `<option value="${location.id}">${text(location.labelZh)}</option>`)
     .join('');
+
+  $$('[data-student-select]').forEach((select) => {
+    select.innerHTML = studentOptions;
+  });
+  $$('[data-lesson-type]').forEach((select) => {
+    select.innerHTML = lessonOptions;
+  });
+  $$('[data-location]').forEach((select) => {
+    select.innerHTML = locationOptions;
+  });
 }
 
 function renderStudents() {
@@ -503,6 +513,29 @@ $('[data-student-form]').addEventListener('submit', async (event) => {
   }
 });
 
+$('[data-direct-lesson-form]').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const input = Object.fromEntries(new FormData(form));
+  if (!input.studentId) return notice('請先新增學員。', true);
+  const scheduled = new Date(input.scheduledStart);
+  if (!Number.isFinite(scheduled.getTime())) return notice('上課時間不正確。', true);
+  input.scheduledStart = scheduled.toISOString();
+  try {
+    await api('/api/lessons/confirmed', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    form.reset();
+    form.elements.scheduledStart.value = defaultDateTimeLocal(0, 12);
+    notice('已直接新增確認課堂，並加入日曆。');
+    await load();
+    $('[data-tab="calendar"]').click();
+  } catch (error) {
+    notice(error.message, true);
+  }
+});
+
 $('[data-schedule-form]').addEventListener('submit', async (event) => {
   event.preventDefault();
   const input = Object.fromEntries(new FormData(event.currentTarget));
@@ -567,8 +600,13 @@ state.calendarYear = Number(calendarNow.year);
 state.calendarMonth = Number(calendarNow.month) - 1;
 state.selectedDate = dateKey();
 
-const tomorrow = new Date(Date.now() + 24 * 60 * 60_000);
-tomorrow.setHours(9, 0, 0, 0);
-$('[name="preferredStart"]').value = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}T09:00`;
+function defaultDateTimeLocal(daysAhead = 0, hour = 12) {
+  const date = new Date(Date.now() + daysAhead * 24 * 60 * 60_000);
+  date.setHours(hour, 0, 0, 0);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:00`;
+}
+
+$('[name="scheduledStart"]').value = defaultDateTimeLocal(0, 12);
+$('[name="preferredStart"]').value = defaultDateTimeLocal(1, 9);
 
 load().catch((error) => notice(error.message, true));
