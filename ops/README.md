@@ -84,6 +84,7 @@ Approval never sends a message. Escalated workflows require an extra explicit co
 
 | Endpoint | Purpose |
 |---|---|
+| `POST /api/lessons/confirmed` | Human creates a confirmed lesson immediately (no WhatsApp, no approval) |
 | `POST /api/agent/operations/draft-schedule` | New lesson or exam-rental proposal |
 | `POST /api/agent/operations/draft-reschedule` | Alternative slots for an existing lesson |
 | `POST /api/agent/operations/draft-reminders` | Draft reminders for approved/confirmed lessons in the next 24 hours |

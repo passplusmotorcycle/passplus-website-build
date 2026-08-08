@@ -7,6 +7,7 @@ import { JsonStore } from './lib/store.js';
 import {
   agentRegistry,
   approveWorkflow,
+  createConfirmedLesson,
   draftLessonReminders,
   draftOperationalNotice,
   draftRescheduleProposal,
@@ -246,6 +247,22 @@ export async function createOpsServer(options = {}) {
           }
           data.payments.push(payment);
           return { entityType: 'payment', entityId: payment.id, value: payment };
+        });
+        return json(res, 201, value);
+      }
+
+      if (req.method === 'POST' && pathname === '/api/lessons/confirmed') {
+        const input = await body(req);
+        const value = await store.transact(actor(req), 'lesson.create_confirmed', (data) => {
+          const result = createConfirmedLesson(data, input, actor(req));
+          data.lessons.push(result.lesson);
+          data.agentRuns.push(result.agentRun);
+          return {
+            entityType: 'lesson',
+            entityId: result.lesson.id,
+            value: result,
+            metadata: { skippedApproval: true, messageSent: false },
+          };
         });
         return json(res, 201, value);
       }

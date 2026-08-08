@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>PassPlus 營運控制台</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=20260808-location-fix" />
+    <link rel="stylesheet" href="/styles.css?v=20260808-direct-lesson" />
   </head>
   <body>
     <header class="topbar">
@@ -66,8 +66,28 @@
             <button type="submit">儲存學員</button>
           </form>
 
-          <form class="card" data-schedule-form>
-            <h2>2. 產生排堂草稿</h2>
+          <form class="card" data-direct-lesson-form>
+            <h2>2. 直接新增已確認課堂</h2>
+            <p class="footnote">課堂後現場約時間用此表單。即時入日曆，毋須批准，亦不會發 WhatsApp。</p>
+            <label>學員<select name="studentId" data-student-select required></select></label>
+            <label>課堂<select name="lessonType" data-lesson-type required></select></label>
+            <label>地點<select name="locationId" data-location required></select></label>
+            <label>
+              上課時間
+              <input type="datetime-local" name="scheduledStart" required />
+            </label>
+            <label>
+              備註
+              <textarea name="notes" rows="3" placeholder="例如：課堂後現場預約"></textarea>
+            </label>
+            <button type="submit">直接新增已確認課堂</button>
+          </form>
+        </div>
+
+        <form class="card" data-schedule-form>
+          <h2>3. 產生排堂草稿（WhatsApp 跟進用）</h2>
+          <p class="footnote">適合未見面、要先發訊息確認嘅查詢。會建立待批准草稿。</p>
+          <div class="grid-two">
             <label>學員<select name="studentId" data-student-select required></select></label>
             <label>課堂<select name="lessonType" data-lesson-type required></select></label>
             <label>地點<select name="locationId" data-location required></select></label>
@@ -75,17 +95,17 @@
               最早可行時間
               <input type="datetime-local" name="preferredStart" required />
             </label>
-            <label>
-              客人備註
-              <textarea
-                name="notes"
-                rows="4"
-                placeholder="如涉及退款、投訴、安全、法例或特殊價格，系統會要求額外確認。"
-              ></textarea>
-            </label>
-            <button type="submit">建立 3 個建議時段</button>
-          </form>
-        </div>
+          </div>
+          <label>
+            客人備註
+            <textarea
+              name="notes"
+              rows="4"
+              placeholder="如涉及退款、投訴、安全、法例或特殊價格，系統會要求額外確認。"
+            ></textarea>
+          </label>
+          <button type="submit">建立 3 個建議時段</button>
+        </form>
       </section>
 
       <section class="panel" data-panel="calendar">
@@ -200,6 +220,6 @@
       </article>
     </template>
 
-    <script type="module" src="/app.js?v=20260808-location-fix"></script>
+    <script type="module" src="/app.js?v=20260808-direct-lesson"></script>
   </body>
 </html>

@@ -94,8 +94,7 @@ function buildReminderMessage(student, lesson, type, location) {
     : `${student.name}你好，提提你將於 ${date} 喺${location.labelZh}進行${type.labelZh}，請回覆確認。如天氣或安全安排有變，PassPlus 會另行通知。`;
 }
 
-export function draftSchedulingProposal(data, input) {
-  validateRequired(input, ['studentId', 'lessonType', 'locationId', 'preferredStart']);
+function resolveLessonResources(data, input) {
   const student = data.students.find((item) => item.id === input.studentId);
   if (!student) throw new Error('Student not found');
   const location = data.locations.find((item) => item.id === input.locationId && item.active);
@@ -119,6 +118,59 @@ export function draftSchedulingProposal(data, input) {
 
   if (type.needsInstructor && !instructorId) throw new Error('No active instructor is available');
   if (type.needsVehicle && !vehicleId) throw new Error('No active vehicle is available');
+
+  return { student, location, type, instructorId, vehicleId };
+}
+
+export function createConfirmedLesson(data, input, actor = 'human-admin') {
+  validateRequired(input, ['studentId', 'lessonType', 'locationId', 'scheduledStart']);
+  const { student, location, instructorId, vehicleId } = resolveLessonResources(data, input);
+  const scheduledStart = new Date(input.scheduledStart).toISOString();
+  if (!Number.isFinite(new Date(scheduledStart).getTime())) {
+    throw new Error('scheduledStart must be a valid ISO date');
+  }
+
+  const lesson = {
+    id: randomUUID(),
+    studentId: student.id,
+    lessonType: input.lessonType,
+    locationId: location.id,
+    instructorId,
+    vehicleId,
+    durationMinutes: LESSON_DURATION_MINUTES,
+    scheduledStart,
+    status: 'confirmed',
+    priceSnapshot: priceSnapshot(input.lessonType),
+    customerNotes: input.notes?.trim() ?? '',
+    bookingSource: 'direct_confirmed',
+    createdBy: actor,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const conflicts = schedulingConflicts(data, lesson);
+  if (conflicts.length) {
+    const resources = [...new Set(conflicts.map((conflict) => conflict.resource))].join(', ');
+    throw new Error(`Schedule conflicts with: ${resources}`);
+  }
+
+  return {
+    lesson,
+    agentRun: {
+      id: randomUUID(),
+      agent: 'operations',
+      action: 'create_confirmed_lesson',
+      status: 'executed',
+      lessonId: lesson.id,
+      createdAt: lesson.createdAt,
+      metadata: { skippedApproval: true, messageSent: false },
+    },
+  };
+}
+
+export function draftSchedulingProposal(data, input) {
+  validateRequired(input, ['studentId', 'lessonType', 'locationId', 'preferredStart']);
+  const { student, location, instructorId, vehicleId } = resolveLessonResources(data, input);
 
   const request = {
     studentId: input.studentId,
