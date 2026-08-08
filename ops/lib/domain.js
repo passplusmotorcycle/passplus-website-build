@@ -11,6 +11,13 @@ export const lessonTypes = Object.freeze({
     needsInstructor: true,
     needsVehicle: true,
   },
+  grand_opening_special: {
+    labelZh: '新張特別導師堂',
+    labelEn: 'Grand Opening Special Lesson',
+    priceHkd: pricing.grandOpeningLesson,
+    needsInstructor: true,
+    needsVehicle: true,
+  },
   self_practice: {
     labelZh: '租車自練',
     labelEn: 'Self-practice bike rental',

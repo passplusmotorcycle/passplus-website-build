@@ -13,6 +13,7 @@ import {
 } from '../lib/agents.js';
 import { schedulingConflicts } from '../lib/scheduling.js';
 import { createOpsServer } from '../server.js';
+import { lessonTypes } from '../lib/domain.js';
 
 async function fixture() {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'passplus-ops-'));
@@ -52,6 +53,16 @@ test('operations agent drafts three slots and cannot send', async (t) => {
   assert.equal(result.workflow.requiresHumanApproval, true);
   assert.equal(result.workflow.agentPolicy, 'draft_only');
   assert.deepEqual(agentRegistry.operations.mayExecute, []);
+});
+
+test('grand opening special lesson uses confirmed price and resources', () => {
+  assert.deepEqual(lessonTypes.grand_opening_special, {
+    labelZh: '新張特別導師堂',
+    labelEn: 'Grand Opening Special Lesson',
+    priceHkd: 500,
+    needsInstructor: true,
+    needsVehicle: true,
+  });
 });
 
 test('approval rechecks conflicts and locks only a proposed slot', async (t) => {

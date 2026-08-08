@@ -33,6 +33,7 @@
 
       <nav class="tabs" aria-label="控制台分頁">
         <button class="is-active" data-tab="schedule">排堂草稿</button>
+        <button data-tab="calendar">課堂日曆</button>
         <button data-tab="approvals">待批准 <span data-pending-count>0</span></button>
         <button data-tab="students">學員</button>
         <button data-tab="brief">明日簡報</button>
@@ -84,6 +85,46 @@
             </label>
             <button type="submit">建立 3 個建議時段</button>
           </form>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="calendar">
+        <div class="today-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">TODAY</p>
+              <h2>今日課堂</h2>
+            </div>
+            <strong class="today-date" data-today-date></strong>
+          </div>
+          <div class="today-list" data-today-lessons></div>
+        </div>
+
+        <div class="calendar-card">
+          <div class="calendar-toolbar">
+            <button type="button" class="secondary calendar-arrow" data-calendar-prev aria-label="上一個月">‹</button>
+            <div>
+              <p class="eyebrow">MONTHLY SCHEDULE</p>
+              <h2 data-calendar-title></h2>
+            </div>
+            <div class="calendar-toolbar-actions">
+              <button type="button" class="secondary" data-calendar-today>今日</button>
+              <button type="button" class="secondary calendar-arrow" data-calendar-next aria-label="下一個月">›</button>
+            </div>
+          </div>
+          <div class="calendar-weekdays" aria-hidden="true">
+            <span>日</span><span>一</span><span>二</span><span>三</span>
+            <span>四</span><span>五</span><span>六</span>
+          </div>
+          <div class="calendar-grid" data-calendar-grid></div>
+        </div>
+
+        <div class="selected-day">
+          <div class="section-heading">
+            <h2 data-selected-date></h2>
+            <span class="status" data-selected-count></span>
+          </div>
+          <div class="stack" data-selected-lessons aria-live="polite"></div>
         </div>
       </section>
 

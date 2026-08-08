@@ -1,6 +1,9 @@
 const state = {
   data: null,
   token: sessionStorage.getItem('ops-admin-token') || '',
+  calendarYear: null,
+  calendarMonth: null,
+  selectedDate: null,
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -37,6 +40,130 @@ function formatDate(value) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value));
+}
+
+function hongKongDateParts(value = new Date()) {
+  return Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Hong_Kong',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+      .formatToParts(new Date(value))
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, part.value])
+  );
+}
+
+function dateKey(value = new Date()) {
+  const parts = hongKongDateParts(value);
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function keyForDay(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function formatTime(value) {
+  return new Intl.DateTimeFormat('zh-HK', {
+    timeZone: 'Asia/Hong_Kong',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(value));
+}
+
+function formatCalendarDate(key, options = {}) {
+  const [year, month, day] = key.split('-').map(Number);
+  return new Intl.DateTimeFormat('zh-HK', {
+    timeZone: 'UTC',
+    year: options.short ? undefined : 'numeric',
+    month: options.short ? 'short' : 'long',
+    day: 'numeric',
+    weekday: options.weekday === false ? undefined : 'short',
+  }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+}
+
+function lessonsForDate(key) {
+  return (state.data?.lessons ?? [])
+    .filter((lesson) => dateKey(lesson.scheduledStart) === key)
+    .sort((a, b) => new Date(a.scheduledStart) - new Date(b.scheduledStart));
+}
+
+function calendarLessonCard(lesson) {
+  const student = state.data.students.find((item) => item.id === lesson.studentId);
+  const location = state.data.locations.find((item) => item.id === lesson.locationId);
+  const type = state.data.lessonTypes[lesson.lessonType];
+  return `<article class="calendar-lesson ${lesson.status === 'cancelled' ? 'is-cancelled' : ''}">
+    <time>${formatTime(lesson.scheduledStart)}</time>
+    <div>
+      <strong>${text(student?.name ?? '未命名學員')} · ${text(type?.labelZh ?? lesson.lessonType)}</strong>
+      <p>${text(location?.labelZh ?? '')} · ${text(lesson.status)}</p>
+    </div>
+  </article>`;
+}
+
+function renderCalendar() {
+  if (!state.data || state.calendarYear == null || state.calendarMonth == null) return;
+  const year = state.calendarYear;
+  const month = state.calendarMonth;
+  const today = dateKey();
+  const monthDate = new Date(Date.UTC(year, month, 1, 12));
+  $('[data-calendar-title]').textContent = new Intl.DateTimeFormat('zh-HK', {
+    timeZone: 'UTC',
+    year: 'numeric',
+    month: 'long',
+  }).format(monthDate);
+
+  const firstWeekday = new Date(Date.UTC(year, month, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const cells = [];
+  for (let index = 0; index < firstWeekday; index += 1) {
+    cells.push('<div class="calendar-day is-empty" aria-hidden="true"></div>');
+  }
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const key = keyForDay(year, month, day);
+    const lessons = lessonsForDate(key);
+    const preview = lessons
+      .slice(0, 2)
+      .map((lesson) => {
+        const type = state.data.lessonTypes[lesson.lessonType];
+        return `<span class="calendar-event">${formatTime(lesson.scheduledStart)} ${text(type?.labelZh ?? '')}</span>`;
+      })
+      .join('');
+    cells.push(`<button
+      type="button"
+      class="calendar-day ${key === today ? 'is-today' : ''} ${key === state.selectedDate ? 'is-selected' : ''}"
+      data-calendar-date="${key}"
+      aria-label="${formatCalendarDate(key)}，${lessons.length}堂課"
+    >
+      <span class="calendar-day-number">${day}</span>
+      <span class="calendar-event-count">${lessons.length ? `${lessons.length}堂` : ''}</span>
+      <span class="calendar-events">${preview}</span>
+    </button>`);
+  }
+  $('[data-calendar-grid]').innerHTML = cells.join('');
+
+  $$('[data-calendar-date]').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.selectedDate = button.dataset.calendarDate;
+      renderCalendar();
+    });
+  });
+
+  const todayLessons = lessonsForDate(today);
+  $('[data-today-date]').textContent = formatCalendarDate(today);
+  $('[data-today-lessons]').innerHTML = todayLessons.length
+    ? todayLessons.map(calendarLessonCard).join('')
+    : '<div class="empty">今日未有課堂</div>';
+
+  const selectedLessons = lessonsForDate(state.selectedDate);
+  $('[data-selected-date]').textContent = formatCalendarDate(state.selectedDate);
+  $('[data-selected-count]').textContent = `${selectedLessons.length} 堂`;
+  $('[data-selected-lessons]').innerHTML = selectedLessons.length
+    ? selectedLessons.map(calendarLessonCard).join('')
+    : '<div class="empty">當日未有課堂</div>';
 }
 
 function text(value) {
@@ -313,6 +440,7 @@ async function load() {
   renderWorkflows();
   renderBrief();
   renderAgents();
+  renderCalendar();
 }
 
 $$('[data-tab]').forEach((tab) => {
@@ -368,6 +496,31 @@ $('[data-schedule-form]').addEventListener('submit', async (event) => {
 });
 
 $('[data-refresh]').addEventListener('click', () => load().catch((error) => notice(error.message, true)));
+$('[data-calendar-prev]').addEventListener('click', () => {
+  state.calendarMonth -= 1;
+  if (state.calendarMonth < 0) {
+    state.calendarMonth = 11;
+    state.calendarYear -= 1;
+  }
+  state.selectedDate = keyForDay(state.calendarYear, state.calendarMonth, 1);
+  renderCalendar();
+});
+$('[data-calendar-next]').addEventListener('click', () => {
+  state.calendarMonth += 1;
+  if (state.calendarMonth > 11) {
+    state.calendarMonth = 0;
+    state.calendarYear += 1;
+  }
+  state.selectedDate = keyForDay(state.calendarYear, state.calendarMonth, 1);
+  renderCalendar();
+});
+$('[data-calendar-today]').addEventListener('click', () => {
+  const parts = hongKongDateParts();
+  state.calendarYear = Number(parts.year);
+  state.calendarMonth = Number(parts.month) - 1;
+  state.selectedDate = dateKey();
+  renderCalendar();
+});
 $('[data-draft-reminders]').addEventListener('click', async () => {
   try {
     const result = await api('/api/agent/operations/draft-reminders', {
@@ -382,6 +535,11 @@ $('[data-draft-reminders]').addEventListener('click', async () => {
   }
 });
 $('[data-token]').value = state.token;
+
+const calendarNow = hongKongDateParts();
+state.calendarYear = Number(calendarNow.year);
+state.calendarMonth = Number(calendarNow.month) - 1;
+state.selectedDate = dateKey();
 
 const tomorrow = new Date(Date.now() + 24 * 60 * 60_000);
 tomorrow.setHours(9, 0, 0, 0);
