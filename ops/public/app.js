@@ -223,7 +223,8 @@ function renderStudents() {
           return `<article class="card">
             <span class="status">${text(lesson.status)}</span>
             <h3>${text(student?.name)} · ${text(type?.labelZh)}</h3>
-            <p>${formatDate(lesson.scheduledStart)} · ${text(location?.labelZh)}</p>
+            <p>${formatDate(lesson.scheduledStart)}</p>
+            <p><strong>地點：${text(location?.labelZh || '未設定')}</strong></p>
             <div class="actions" data-lesson-actions="${lesson.id}">
               <button type="button" class="secondary" data-reschedule>改期草稿</button>
               <button type="button" class="secondary" data-weather>天氣通知草稿</button>
@@ -298,101 +299,126 @@ async function updateLessonStatus(lessonId, status) {
 function renderWorkflows() {
   const root = $('[data-workflows]');
   root.replaceChildren();
-  const workflows = [...state.data.workflows].sort(
+  const allWorkflows = [...state.data.workflows].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
-  $('[data-pending-count]').textContent = workflows.filter(
+  const pendingWorkflows = allWorkflows.filter(
     (workflow) => workflow.status === 'pending_approval'
-  ).length;
+  );
+  const recentDecided = allWorkflows
+    .filter((workflow) => workflow.status === 'approved' || workflow.status === 'rejected')
+    .slice(0, 5);
 
-  if (!workflows.length) {
-    root.innerHTML = '<div class="empty">未有排堂草稿</div>';
-    return;
+  $('[data-pending-count]').textContent = String(pendingWorkflows.length);
+
+  if (!pendingWorkflows.length) {
+    root.innerHTML = '<div class="empty">目前沒有待批准事項</div>';
   }
 
-  for (const workflow of workflows) {
-    const node = $('[data-workflow-template]').content.cloneNode(true);
-    const card = $('.workflow', node);
-    const student = state.data.students.find((item) => item.id === workflow.studentId);
-    const workflowLabels = {
-      schedule_lesson: '排堂建議',
-      reschedule_lesson: '改期建議',
-      lesson_reminder: '課堂提醒',
-      weather_notice: '天氣安排',
-      late_notice: '遲到安排',
-      cancellation_notice: '取消安排',
-      vehicle_change_notice: '車輛更改',
-    };
-    $('[data-workflow-title]', card).textContent =
-      `${student?.name ?? '學員'} · ${workflowLabels[workflow.type] ?? workflow.type}`;
-    $('[data-created]', card).textContent = formatDate(workflow.createdAt);
-    $('.status', card).textContent =
-      workflow.status === 'pending_approval'
-        ? '待批准'
-        : workflow.status === 'approved'
-          ? '已批准・待人手發送'
-          : '已拒絕';
-    const select = $('[data-slot]', card);
-    select.innerHTML = workflow.proposedSlots
-      .map(
-        (slot) =>
-          `<option value="${slot}" ${slot === workflow.selectedSlot ? 'selected' : ''}>${formatDate(slot)}</option>`
-      )
-      .join('');
-    select.parentElement.hidden = workflow.proposedSlots.length === 0;
-    const draft = $('[data-draft]', card);
-    draft.value = workflow.draftContent;
-    const escalation = $('[data-escalation]', card);
-    if (workflow.escalations.length) {
-      escalation.hidden = false;
-      escalation.textContent = `需要真人額外確認：${workflow.escalations.join('、')}`;
+  for (const workflow of pendingWorkflows) {
+    root.append(createWorkflowCard(workflow, true));
+  }
+
+  if (recentDecided.length) {
+    const heading = document.createElement('div');
+    heading.className = 'section-heading';
+    heading.innerHTML = '<h3>最近已處理</h3><span class="footnote">不會計入上方待批准數目</span>';
+    root.append(heading);
+    for (const workflow of recentDecided) {
+      root.append(createWorkflowCard(workflow, false));
     }
-
-    const isPending = workflow.status === 'pending_approval';
-    $('[data-approve]', card).hidden = !isPending;
-    $('[data-reject]', card).hidden = !isPending;
-    select.disabled = !isPending;
-    draft.disabled = !isPending;
-    $('[data-copy]', card).disabled = workflow.status !== 'approved';
-
-    $('[data-approve]', card).addEventListener('click', async () => {
-      try {
-        await api(`/api/workflows/${workflow.id}/approve`, {
-          method: 'POST',
-          body: JSON.stringify({
-            selectedSlot: select.value,
-            draftContent: draft.value,
-            confirmEscalationReview: workflow.escalations.length
-              ? window.confirm('你確認已由真人審核高風險內容？')
-              : false,
-          }),
-        });
-        notice('時段已批准；訊息仍未發送。');
-        await load();
-      } catch (error) {
-        notice(error.message, true);
-      }
-    });
-    $('[data-copy]', card).addEventListener('click', async () => {
-      await navigator.clipboard.writeText(workflow.draftContent);
-      notice('已複製經批准訊息，請由真人在 WhatsApp 發送。');
-    });
-    $('[data-reject]', card).addEventListener('click', async () => {
-      const reason = window.prompt('請輸入拒絕原因');
-      if (!reason) return;
-      try {
-        await api(`/api/workflows/${workflow.id}/reject`, {
-          method: 'POST',
-          body: JSON.stringify({ reason }),
-        });
-        notice('草稿已拒絕並保留審計記錄。');
-        await load();
-      } catch (error) {
-        notice(error.message, true);
-      }
-    });
-    root.append(node);
   }
+}
+
+function createWorkflowCard(workflow, isPending) {
+  const node = $('[data-workflow-template]').content.cloneNode(true);
+  const card = $('.workflow', node);
+  const student = state.data.students.find((item) => item.id === workflow.studentId);
+  const lesson = state.data.lessons.find((item) => item.id === workflow.entityId);
+  const location = state.data.locations.find((item) => item.id === lesson?.locationId);
+  const workflowLabels = {
+    schedule_lesson: '排堂建議',
+    reschedule_lesson: '改期建議',
+    lesson_reminder: '課堂提醒',
+    weather_notice: '天氣安排',
+    late_notice: '遲到安排',
+    cancellation_notice: '取消安排',
+    vehicle_change_notice: '車輛更改',
+  };
+  $('[data-workflow-title]', card).textContent =
+    `${student?.name ?? '學員'} · ${workflowLabels[workflow.type] ?? workflow.type}`;
+  $('[data-created]', card).textContent = formatDate(workflow.createdAt);
+  $('.status', card).textContent =
+    workflow.status === 'pending_approval'
+      ? '待批准'
+      : workflow.status === 'approved'
+        ? '已批准・待人手發送'
+        : '已拒絕';
+  const locationLine = $('[data-workflow-location]', card);
+  if (locationLine) {
+    locationLine.textContent = location
+      ? `地點：${location.labelZh}`
+      : '地點：未有課堂地點資料';
+  }
+  const select = $('[data-slot]', card);
+  select.innerHTML = (workflow.proposedSlots || [])
+    .map(
+      (slot) =>
+        `<option value="${slot}" ${slot === workflow.selectedSlot ? 'selected' : ''}>${formatDate(slot)}</option>`
+    )
+    .join('');
+  select.parentElement.hidden = !(workflow.proposedSlots || []).length;
+  const draft = $('[data-draft]', card);
+  draft.value = workflow.draftContent;
+  const escalation = $('[data-escalation]', card);
+  if (workflow.escalations?.length) {
+    escalation.hidden = false;
+    escalation.textContent = `需要真人額外確認：${workflow.escalations.join('、')}`;
+  }
+
+  $('[data-approve]', card).hidden = !isPending;
+  $('[data-reject]', card).hidden = !isPending;
+  select.disabled = !isPending;
+  draft.disabled = !isPending;
+  $('[data-copy]', card).disabled = workflow.status !== 'approved';
+
+  $('[data-approve]', card).addEventListener('click', async () => {
+    try {
+      await api(`/api/workflows/${workflow.id}/approve`, {
+        method: 'POST',
+        body: JSON.stringify({
+          selectedSlot: select.value,
+          draftContent: draft.value,
+          confirmEscalationReview: workflow.escalations.length
+            ? window.confirm('你確認已由真人審核高風險內容？')
+            : false,
+        }),
+      });
+      notice('時段已批准；訊息仍未發送。');
+      await load();
+    } catch (error) {
+      notice(error.message, true);
+    }
+  });
+  $('[data-copy]', card).addEventListener('click', async () => {
+    await navigator.clipboard.writeText(workflow.draftContent);
+    notice('已複製經批准訊息，請由真人在 WhatsApp 發送。');
+  });
+  $('[data-reject]', card).addEventListener('click', async () => {
+    const reason = window.prompt('請輸入拒絕原因');
+    if (!reason) return;
+    try {
+      await api(`/api/workflows/${workflow.id}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      });
+      notice('草稿已拒絕並保留審計記錄。');
+      await load();
+    } catch (error) {
+      notice(error.message, true);
+    }
+  });
+  return node;
 }
 
 function renderBrief() {

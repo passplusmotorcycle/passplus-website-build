@@ -65,6 +65,25 @@ test('grand opening special lesson uses confirmed price and resources', () => {
   });
 });
 
+test('so kon po bookings keep selected location even when vehicle home base is tin kwong', async (t) => {
+  const { directory, store } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const data = store.snapshot();
+  assert.equal(data.vehicles[0].locationId, 'tin_kwong_road');
+
+  const result = draftSchedulingProposal(data, {
+    studentId: 'student-1',
+    lessonType: 'grand_opening_special',
+    locationId: 'so_kon_po',
+    preferredStart: '2030-01-02T01:00:00.000Z',
+    notes: '',
+  });
+
+  assert.equal(result.lesson.locationId, 'so_kon_po');
+  assert.match(result.workflow.draftContent, /掃桿埔/);
+  assert.doesNotMatch(result.workflow.draftContent, /天光道/);
+});
+
 test('approval rechecks conflicts and locks only a proposed slot', async (t) => {
   const { directory, store } = await fixture();
   t.after(() => rm(directory, { recursive: true, force: true }));

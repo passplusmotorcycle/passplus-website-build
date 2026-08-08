@@ -146,6 +146,7 @@ export function seedData() {
         id: 'vehicle-training-1',
         code: 'TRAINING-1',
         model: 'Training motorcycle',
+        // Home base only; bikes can be booked at Tin Kwong Road or So Kon Po.
         locationId: 'tin_kwong_road',
         status: 'available',
         active: true,

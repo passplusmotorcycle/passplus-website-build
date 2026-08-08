@@ -110,15 +110,11 @@ export function draftSchedulingProposal(data, input) {
           (item) => item.active && item.defaultLocationIds.includes(input.locationId)
         )?.id
       : null);
+  // Vehicle locationId is the home base only. Training bikes can be used at either venue.
   const vehicleId =
     input.vehicleId ??
     (type.needsVehicle
-      ? data.vehicles.find(
-          (item) =>
-            item.active &&
-            item.status === 'available' &&
-            (!item.locationId || item.locationId === input.locationId)
-        )?.id
+      ? data.vehicles.find((item) => item.active && item.status === 'available')?.id
       : null);
 
   if (type.needsInstructor && !instructorId) throw new Error('No active instructor is available');
@@ -127,7 +123,7 @@ export function draftSchedulingProposal(data, input) {
   const request = {
     studentId: input.studentId,
     lessonType: input.lessonType,
-    locationId: input.locationId,
+    locationId: location.id,
     instructorId,
     vehicleId,
     durationMinutes: LESSON_DURATION_MINUTES,
