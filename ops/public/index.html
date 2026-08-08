@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>PassPlus 營運控制台</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=20260808-calendar" />
+    <link rel="stylesheet" href="/styles.css?v=20260808-location-fix" />
   </head>
   <body>
     <header class="topbar">
@@ -181,6 +181,7 @@
           <div><span class="status">待批准</span><h3 data-workflow-title></h3></div>
           <time data-created></time>
         </div>
+        <p class="workflow-location" data-workflow-location></p>
         <div class="escalation" data-escalation hidden></div>
         <label>
           選擇時段
@@ -199,6 +200,6 @@
       </article>
     </template>
 
-    <script type="module" src="/app.js?v=20260808-calendar"></script>
+    <script type="module" src="/app.js?v=20260808-location-fix"></script>
   </body>
 </html>

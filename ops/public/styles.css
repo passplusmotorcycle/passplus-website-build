@@ -103,6 +103,7 @@ textarea { resize: vertical; }
   font-size: 0.75rem;
   font-weight: 800;
 }
+.workflow-location { margin: 0.35rem 0 0.8rem; color: var(--navy); font-weight: 700; }
 .escalation { margin: 0.8rem 0; padding: 0.8rem; color: var(--warning); background: #fff8c5; border-left: 4px solid #d4a72c; }
 .actions { justify-content: flex-start; flex-wrap: wrap; }
 .table-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
