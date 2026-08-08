@@ -38,6 +38,19 @@ npm run build
 npm run preview
 ```
 
+## Internal operations pilot
+
+The private scheduling and human-approval service lives in `ops/` and is deployed separately from
+GitHub Pages. It provides unified student/lesson/resource data, conflict-free scheduling drafts,
+approval-gated WhatsApp copy, audit logs, and two-week pilot metrics.
+
+```bash
+npm run ops:start
+```
+
+Open `http://localhost:8787`. See [`ops/README.md`](ops/README.md) for cloud deployment, security,
+workflow, API, and pilot instructions. Never deploy `ops/` as public static website content.
+
 ## Custom domain (Namecheap)
 
 Domain: `passplusmotorcyclehk.com`

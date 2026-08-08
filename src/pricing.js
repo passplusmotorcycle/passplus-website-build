@@ -11,6 +11,7 @@ export const pricing = {
   corePackageList: 5100,
   mockUpgrade: 100,
   instructorLesson: 850,
+  grandOpeningLesson: 500,
   selfPractice: 400,
   mockTest: 950,
   examRental: 500,
