@@ -52,12 +52,6 @@ export const dict = {
           desc: '針對強制試後路試準備，一對一實戰指導。',
         },
         {
-          name: '新張特別導師堂',
-          priceId: 'grandOpeningLesson',
-          note: '新張特別優惠',
-          desc: '110 分鐘一對一導師課堂，需要教練及訓練電單車。',
-        },
-        {
           name: '租車自練',
           priceId: 'selfPractice',
           note: '',
@@ -309,12 +303,6 @@ export const dict = {
           priceId: 'instructorLesson',
           note: 'Upgrade to a mock road test for an additional {upgrade}',
           desc: 'Practical, one-to-one coaching to prepare you for Part C after passing the Mandatory Competence Test.',
-        },
-        {
-          name: 'Grand Opening Special Lesson',
-          priceId: 'grandOpeningLesson',
-          note: 'Grand opening special',
-          desc: 'A 110-minute one-to-one lesson with an instructor and training motorcycle.',
         },
         {
           name: 'Self-Practice Session',
