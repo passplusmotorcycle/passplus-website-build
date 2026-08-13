@@ -74,9 +74,12 @@ function formatTime(value) {
   }).format(new Date(value));
 }
 
+function lessonEndTime(start, durationMinutes = 110) {
+  return new Date(new Date(start).getTime() + Number(durationMinutes || 110) * 60 * 1000);
+}
+
 function formatTimeRange(start, durationMinutes = 110) {
-  const end = new Date(new Date(start).getTime() + durationMinutes * 60 * 1000);
-  return `${formatTime(start)}–${formatTime(end)}`;
+  return `${formatTime(start)}–${formatTime(lessonEndTime(start, durationMinutes))}`;
 }
 
 function formatCalendarDate(key, options = {}) {
@@ -101,7 +104,10 @@ function calendarLessonCard(lesson) {
   const location = state.data.locations.find((item) => item.id === lesson.locationId);
   const type = state.data.lessonTypes[lesson.lessonType];
   return `<article class="calendar-lesson ${lesson.status === 'cancelled' ? 'is-cancelled' : ''}">
-    <time>${formatTimeRange(lesson.scheduledStart, lesson.durationMinutes)}</time>
+    <time datetime="${text(lesson.scheduledStart)}">
+      <span class="lesson-time-start">${formatTime(lesson.scheduledStart)}</span>
+      <span class="lesson-time-end">${formatTime(lessonEndTime(lesson.scheduledStart, lesson.durationMinutes))}</span>
+    </time>
     <div>
       <strong>${text(student?.name ?? '未命名學員')} · ${text(type?.labelZh ?? lesson.lessonType)}</strong>
       <p>${text(location?.labelZh ?? '')} · ${text(lesson.status)}</p>
