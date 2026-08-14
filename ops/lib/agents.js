@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import {
-  LESSON_DURATION_MINUTES,
+  durationMinutesFor,
   escalationCategories,
+  isAllDayLessonType,
   lessonTypes,
   priceSnapshot,
   validateRequired,
@@ -137,7 +138,8 @@ export function createConfirmedLesson(data, input, actor = 'human-admin') {
     locationId: location.id,
     instructorId,
     vehicleId,
-    durationMinutes: LESSON_DURATION_MINUTES,
+    durationMinutes: durationMinutesFor(input.lessonType),
+    allDay: isAllDayLessonType(input.lessonType),
     scheduledStart,
     status: 'confirmed',
     priceSnapshot: priceSnapshot(input.lessonType),
@@ -178,7 +180,8 @@ export function draftSchedulingProposal(data, input) {
     locationId: location.id,
     instructorId,
     vehicleId,
-    durationMinutes: LESSON_DURATION_MINUTES,
+    durationMinutes: durationMinutesFor(input.lessonType),
+    allDay: isAllDayLessonType(input.lessonType),
     preferredStart: input.preferredStart,
   };
   const slots = proposeAvailableSlots(data, request);

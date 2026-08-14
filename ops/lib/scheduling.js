@@ -1,4 +1,9 @@
-import { LESSON_DURATION_MINUTES, SLOT_STEP_MINUTES, lessonTypes } from './domain.js';
+import {
+  SLOT_STEP_MINUTES,
+  durationMinutesFor,
+  isAllDayLessonType,
+  lessonTypes,
+} from './domain.js';
 
 const ACTIVE_LESSON_STATUSES = new Set([
   'pending_approval',
@@ -19,27 +24,60 @@ export function overlaps(startA, durationA, startB, durationB) {
   return a < b + durationB * 60_000 && b < a + durationA * 60_000;
 }
 
+function hongKongDateKey(value) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Hong_Kong',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(value));
+}
+
+function isAllDayLesson(lesson) {
+  return Boolean(lesson?.allDay || isAllDayLessonType(lesson?.lessonType));
+}
+
+function lessonDurationMinutes(lesson) {
+  if (isAllDayLesson(lesson)) return 0;
+  return lesson?.durationMinutes ?? durationMinutesFor(lesson?.lessonType ?? 'instructor');
+}
+
+function lessonsOverlap(candidate, lesson) {
+  if (isAllDayLesson(candidate) || isAllDayLesson(lesson)) {
+    return hongKongDateKey(candidate.scheduledStart) === hongKongDateKey(lesson.scheduledStart);
+  }
+  return overlaps(
+    candidate.scheduledStart,
+    lessonDurationMinutes(candidate),
+    lesson.scheduledStart,
+    lessonDurationMinutes(lesson)
+  );
+}
+
 export function schedulingConflicts(data, candidate, ignoredLessonId = null) {
-  const duration = candidate.durationMinutes ?? LESSON_DURATION_MINUTES;
-  const resourceFields = ['studentId', 'instructorId', 'vehicleId', 'locationId'];
+  const allDay = isAllDayLesson(candidate);
+  const resourceFields = allDay
+    ? ['studentId', 'instructorId', 'vehicleId']
+    : ['studentId', 'instructorId', 'vehicleId', 'locationId'];
 
   return data.lessons
     .filter(
       (lesson) =>
         lesson.id !== ignoredLessonId &&
         ACTIVE_LESSON_STATUSES.has(lesson.status) &&
-        overlaps(candidate.scheduledStart, duration, lesson.scheduledStart, lesson.durationMinutes)
+        lessonsOverlap(candidate, lesson)
     )
-    .flatMap((lesson) =>
-      resourceFields
+    .flatMap((lesson) => {
+      const fields = isAllDayLesson(lesson) ? ['studentId', 'instructorId', 'vehicleId'] : resourceFields;
+      return fields
         .filter((field) => candidate[field] && candidate[field] === lesson[field])
         .map((field) => ({
           lessonId: lesson.id,
           resource: field.replace(/Id$/, ''),
           resourceId: candidate[field],
           scheduledStart: lesson.scheduledStart,
-        }))
-    );
+        }));
+    });
 }
 
 function roundToStep(date, stepMinutes = SLOT_STEP_MINUTES) {
@@ -74,17 +112,20 @@ export function proposeAvailableSlots(data, request, options = {}) {
   const end = start.getTime() + maxDays * 24 * 60 * 60_000;
   const slots = [];
 
+  const stepMinutes = lessonType.allDay ? 24 * 60 : SLOT_STEP_MINUTES;
+
   for (
     let cursor = start;
     cursor.getTime() <= end && slots.length < desiredCount;
-    cursor = new Date(cursor.getTime() + SLOT_STEP_MINUTES * 60_000)
+    cursor = new Date(cursor.getTime() + stepMinutes * 60_000)
   ) {
     if (!withinHongKongOperatingHours(cursor)) continue;
 
     const candidate = {
       ...request,
       scheduledStart: cursor.toISOString(),
-      durationMinutes: request.durationMinutes ?? LESSON_DURATION_MINUTES,
+      durationMinutes: request.durationMinutes ?? durationMinutesFor(request.lessonType),
+      allDay: isAllDayLessonType(request.lessonType),
     };
     const conflicts = schedulingConflicts(data, candidate, ignoredLessonId);
     if (!conflicts.length) slots.push(candidate.scheduledStart);

@@ -99,6 +99,10 @@ function lessonsForDate(key) {
     .sort((a, b) => new Date(a.scheduledStart) - new Date(b.scheduledStart));
 }
 
+function isAllDayLesson(lesson) {
+  return Boolean(lesson.allDay || state.data?.lessonTypes?.[lesson.lessonType]?.allDay);
+}
+
 function lessonNotes(lesson) {
   return String(lesson?.customerNotes ?? lesson?.notes ?? '').trim();
 }
@@ -108,10 +112,11 @@ function calendarLessonCard(lesson) {
   const location = state.data.locations.find((item) => item.id === lesson.locationId);
   const type = state.data.lessonTypes[lesson.lessonType];
   const notes = lessonNotes(lesson);
-  return `<article class="calendar-lesson ${lesson.status === 'cancelled' ? 'is-cancelled' : ''}">
-    <time datetime="${text(lesson.scheduledStart)}">
+  const allDay = isAllDayLesson(lesson);
+  return `<article class="calendar-lesson ${lesson.status === 'cancelled' ? 'is-cancelled' : ''} ${allDay ? 'is-all-day' : ''}">
+    <time datetime="${text(lesson.scheduledStart)}" class="${allDay ? 'is-all-day' : ''}">
       <span class="lesson-time-start">${formatTime(lesson.scheduledStart)}</span>
-      <span class="lesson-time-end">${formatTime(lessonEndTime(lesson.scheduledStart, lesson.durationMinutes))}</span>
+      <span class="lesson-time-end">${allDay ? '全日' : formatTime(lessonEndTime(lesson.scheduledStart, lesson.durationMinutes))}</span>
     </time>
     <div>
       <strong>${text(student?.name ?? '未命名學員')} · ${text(type?.labelZh ?? lesson.lessonType)}</strong>
@@ -146,7 +151,10 @@ function renderCalendar() {
       .slice(0, 2)
       .map((lesson) => {
         const type = state.data.lessonTypes[lesson.lessonType];
-        return `<span class="calendar-event">${formatTimeRange(lesson.scheduledStart, lesson.durationMinutes)} ${text(type?.labelZh ?? '')}</span>`;
+        const when = isAllDayLesson(lesson)
+          ? `${formatTime(lesson.scheduledStart)} 全日`
+          : formatTimeRange(lesson.scheduledStart, lesson.durationMinutes);
+        return `<span class="calendar-event">${when} ${text(type?.labelZh ?? '')}</span>`;
       })
       .join('');
     cells.push(`<button
