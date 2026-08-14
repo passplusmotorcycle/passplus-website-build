@@ -51,19 +51,17 @@ export const lessonTypes = Object.freeze({
     needsInstructor: false,
     needsVehicle: true,
     durationMinutes: 0,
-    allDay: true,
   },
 });
-
-export function isAllDayLessonType(lessonType) {
-  return Boolean(lessonTypes[lessonType]?.allDay);
-}
 
 export function durationMinutesFor(lessonType) {
   const type = lessonTypes[lessonType];
   if (!type) throw new Error(`Unknown lesson type: ${lessonType}`);
-  if (type.allDay) return 0;
   return type.durationMinutes ?? LESSON_DURATION_MINUTES;
+}
+
+export function hasLessonEndTime(lessonType) {
+  return durationMinutesFor(lessonType) > 0;
 }
 
 export const locations = Object.freeze([

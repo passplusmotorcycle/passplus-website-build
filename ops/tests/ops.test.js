@@ -91,12 +91,11 @@ test('direct confirmed lesson skips approval and lands on the calendar', async (
   assert.equal(result.agentRun.metadata.messageSent, false);
 });
 
-test('exam-day bike rental is all-day and does not use a 110-minute slot', async (t) => {
+test('exam-day bike rental stores the given time without a 110-minute duration', async (t) => {
   const { directory, store } = await fixture();
   t.after(() => rm(directory, { recursive: true, force: true }));
   const data = store.snapshot();
 
-  assert.equal(lessonTypes.exam_rental.allDay, true);
   assert.equal(lessonTypes.exam_rental.durationMinutes, 0);
 
   const rental = createConfirmedLesson(data, {
@@ -107,7 +106,7 @@ test('exam-day bike rental is all-day and does not use a 110-minute slot', async
     notes: '丙部考試',
   });
   assert.equal(rental.lesson.durationMinutes, 0);
-  assert.equal(rental.lesson.allDay, true);
+  assert.equal(rental.lesson.scheduledStart, '2030-01-03T01:00:00.000Z');
   data.lessons.push(rental.lesson);
   data.students.push({
     id: 'student-2',
@@ -121,39 +120,13 @@ test('exam-day bike rental is all-day and does not use a 110-minute slot', async
     updatedAt: rental.lesson.updatedAt,
   });
 
-  assert.throws(
-    () =>
-      createConfirmedLesson(data, {
-        studentId: 'student-2',
-        lessonType: 'instructor',
-        locationId: 'so_kon_po',
-        scheduledStart: '2030-01-03T06:30:00.000Z',
-      }),
-    /Schedule conflicts with: vehicle/
-  );
-
-  const nextDay = createConfirmedLesson(data, {
+  const laterLesson = createConfirmedLesson(data, {
     studentId: 'student-2',
     lessonType: 'instructor',
     locationId: 'so_kon_po',
-    scheduledStart: '2030-01-04T01:00:00.000Z',
+    scheduledStart: '2030-01-03T06:30:00.000Z',
   });
-  assert.equal(nextDay.lesson.durationMinutes, 110);
-  assert.equal(nextDay.lesson.allDay, false);
-
-  const draft = draftSchedulingProposal(data, {
-    studentId: 'student-2',
-    lessonType: 'exam_rental',
-    locationId: 'so_kon_po',
-    preferredStart: '2030-01-05T01:00:00.000Z',
-    notes: '',
-  });
-  const gaps = draft.workflow.proposedSlots
-    .map((slot) => new Date(slot).getTime())
-    .slice(1)
-    .map((time, index) => time - new Date(draft.workflow.proposedSlots[index]).getTime());
-  assert.equal(draft.workflow.proposedSlots.length, 3);
-  assert.ok(gaps.every((gap) => gap >= 23 * 60 * 60 * 1000));
+  assert.equal(laterLesson.lesson.durationMinutes, 110);
 });
 
 test('so kon po bookings keep selected location even when vehicle home base is tin kwong', async (t) => {

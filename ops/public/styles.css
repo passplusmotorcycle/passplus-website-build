@@ -208,7 +208,6 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
   font-size: 0.72rem;
   font-weight: 700;
 }
-.calendar-lesson time.is-all-day .lesson-time-end::before { content: none; }
 .calendar-lesson p { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.82rem; }
 .lesson-notes {
   margin: 0.45rem 0 0;
