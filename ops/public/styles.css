@@ -209,6 +209,17 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
   font-weight: 700;
 }
 .calendar-lesson p { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.82rem; }
+.lesson-notes {
+  margin: 0.45rem 0 0;
+  padding: 0.45rem 0.55rem;
+  color: var(--navy);
+  background: var(--green-light);
+  border-radius: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
 .calendar-lesson.is-cancelled { opacity: 0.58; border-left-color: var(--danger); text-decoration: line-through; }
 
 @media (max-width: 760px) {

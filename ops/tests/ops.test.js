@@ -84,6 +84,7 @@ test('direct confirmed lesson skips approval and lands on the calendar', async (
 
   assert.equal(result.lesson.status, 'confirmed');
   assert.equal(result.lesson.locationId, 'so_kon_po');
+  assert.equal(result.lesson.customerNotes, '課堂後現場預約');
   assert.equal(result.lesson.bookingSource, 'direct_confirmed');
   assert.equal(result.agentRun.metadata.skippedApproval, true);
   assert.equal(result.agentRun.metadata.messageSent, false);
