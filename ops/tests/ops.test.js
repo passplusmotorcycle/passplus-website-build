@@ -63,6 +63,7 @@ test('grand opening special lesson uses confirmed price and resources', () => {
     priceHkd: 500,
     needsInstructor: true,
     needsVehicle: true,
+    durationMinutes: 110,
   });
 });
 
@@ -88,6 +89,44 @@ test('direct confirmed lesson skips approval and lands on the calendar', async (
   assert.equal(result.lesson.bookingSource, 'direct_confirmed');
   assert.equal(result.agentRun.metadata.skippedApproval, true);
   assert.equal(result.agentRun.metadata.messageSent, false);
+});
+
+test('exam-day bike rental stores the given time without a 110-minute duration', async (t) => {
+  const { directory, store } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const data = store.snapshot();
+
+  assert.equal(lessonTypes.exam_rental.durationMinutes, 0);
+
+  const rental = createConfirmedLesson(data, {
+    studentId: 'student-1',
+    lessonType: 'exam_rental',
+    locationId: 'so_kon_po',
+    scheduledStart: '2030-01-03T01:00:00.000Z',
+    notes: '丙部考試',
+  });
+  assert.equal(rental.lesson.durationMinutes, 0);
+  assert.equal(rental.lesson.scheduledStart, '2030-01-03T01:00:00.000Z');
+  data.lessons.push(rental.lesson);
+  data.students.push({
+    id: 'student-2',
+    name: '李同學',
+    whatsapp: '85260000001',
+    preferredLanguage: 'zh-Hant',
+    licensingStage: 'learner',
+    purchasedLessons: 0,
+    usedLessons: 0,
+    createdAt: rental.lesson.createdAt,
+    updatedAt: rental.lesson.updatedAt,
+  });
+
+  const laterLesson = createConfirmedLesson(data, {
+    studentId: 'student-2',
+    lessonType: 'instructor',
+    locationId: 'so_kon_po',
+    scheduledStart: '2030-01-03T06:30:00.000Z',
+  });
+  assert.equal(laterLesson.lesson.durationMinutes, 110);
 });
 
 test('so kon po bookings keep selected location even when vehicle home base is tin kwong', async (t) => {

@@ -1,4 +1,4 @@
-import { LESSON_DURATION_MINUTES, SLOT_STEP_MINUTES, lessonTypes } from './domain.js';
+import { SLOT_STEP_MINUTES, durationMinutesFor, lessonTypes } from './domain.js';
 
 const ACTIVE_LESSON_STATUSES = new Set([
   'pending_approval',
@@ -19,8 +19,13 @@ export function overlaps(startA, durationA, startB, durationB) {
   return a < b + durationB * 60_000 && b < a + durationA * 60_000;
 }
 
+function lessonDurationMinutes(lesson) {
+  if (lesson?.durationMinutes != null) return Number(lesson.durationMinutes);
+  return durationMinutesFor(lesson?.lessonType ?? 'instructor');
+}
+
 export function schedulingConflicts(data, candidate, ignoredLessonId = null) {
-  const duration = candidate.durationMinutes ?? LESSON_DURATION_MINUTES;
+  const duration = lessonDurationMinutes(candidate);
   const resourceFields = ['studentId', 'instructorId', 'vehicleId', 'locationId'];
 
   return data.lessons
@@ -28,7 +33,12 @@ export function schedulingConflicts(data, candidate, ignoredLessonId = null) {
       (lesson) =>
         lesson.id !== ignoredLessonId &&
         ACTIVE_LESSON_STATUSES.has(lesson.status) &&
-        overlaps(candidate.scheduledStart, duration, lesson.scheduledStart, lesson.durationMinutes)
+        overlaps(
+          candidate.scheduledStart,
+          duration,
+          lesson.scheduledStart,
+          lessonDurationMinutes(lesson)
+        )
     )
     .flatMap((lesson) =>
       resourceFields
@@ -84,7 +94,7 @@ export function proposeAvailableSlots(data, request, options = {}) {
     const candidate = {
       ...request,
       scheduledStart: cursor.toISOString(),
-      durationMinutes: request.durationMinutes ?? LESSON_DURATION_MINUTES,
+      durationMinutes: request.durationMinutes ?? durationMinutesFor(request.lessonType),
     };
     const conflicts = schedulingConflicts(data, candidate, ignoredLessonId);
     if (!conflicts.length) slots.push(candidate.scheduledStart);

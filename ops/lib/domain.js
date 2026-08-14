@@ -10,6 +10,7 @@ export const lessonTypes = Object.freeze({
     priceHkd: pricing.instructorLesson,
     needsInstructor: true,
     needsVehicle: true,
+    durationMinutes: LESSON_DURATION_MINUTES,
   },
   grand_opening_special: {
     labelZh: '新張特別導師堂',
@@ -17,6 +18,7 @@ export const lessonTypes = Object.freeze({
     priceHkd: pricing.grandOpeningLesson,
     needsInstructor: true,
     needsVehicle: true,
+    durationMinutes: LESSON_DURATION_MINUTES,
   },
   self_practice: {
     labelZh: '租車自練',
@@ -24,6 +26,7 @@ export const lessonTypes = Object.freeze({
     priceHkd: pricing.selfPractice,
     needsInstructor: false,
     needsVehicle: true,
+    durationMinutes: LESSON_DURATION_MINUTES,
   },
   mock_test: {
     labelZh: '模擬考試堂',
@@ -31,6 +34,7 @@ export const lessonTypes = Object.freeze({
     priceHkd: pricing.mockTest,
     needsInstructor: true,
     needsVehicle: true,
+    durationMinutes: LESSON_DURATION_MINUTES,
   },
   consultation: {
     labelZh: '考牌諮詢',
@@ -38,6 +42,7 @@ export const lessonTypes = Object.freeze({
     priceHkd: 0,
     needsInstructor: true,
     needsVehicle: false,
+    durationMinutes: LESSON_DURATION_MINUTES,
   },
   exam_rental: {
     labelZh: '考試當日租車',
@@ -45,8 +50,19 @@ export const lessonTypes = Object.freeze({
     priceHkd: pricing.examRental,
     needsInstructor: false,
     needsVehicle: true,
+    durationMinutes: 0,
   },
 });
+
+export function durationMinutesFor(lessonType) {
+  const type = lessonTypes[lessonType];
+  if (!type) throw new Error(`Unknown lesson type: ${lessonType}`);
+  return type.durationMinutes ?? LESSON_DURATION_MINUTES;
+}
+
+export function hasLessonEndTime(lessonType) {
+  return durationMinutesFor(lessonType) > 0;
+}
 
 export const locations = Object.freeze([
   {
