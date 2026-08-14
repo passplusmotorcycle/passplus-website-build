@@ -99,10 +99,15 @@ function lessonsForDate(key) {
     .sort((a, b) => new Date(a.scheduledStart) - new Date(b.scheduledStart));
 }
 
+function lessonNotes(lesson) {
+  return String(lesson?.customerNotes ?? lesson?.notes ?? '').trim();
+}
+
 function calendarLessonCard(lesson) {
   const student = state.data.students.find((item) => item.id === lesson.studentId);
   const location = state.data.locations.find((item) => item.id === lesson.locationId);
   const type = state.data.lessonTypes[lesson.lessonType];
+  const notes = lessonNotes(lesson);
   return `<article class="calendar-lesson ${lesson.status === 'cancelled' ? 'is-cancelled' : ''}">
     <time datetime="${text(lesson.scheduledStart)}">
       <span class="lesson-time-start">${formatTime(lesson.scheduledStart)}</span>
@@ -111,6 +116,7 @@ function calendarLessonCard(lesson) {
     <div>
       <strong>${text(student?.name ?? '未命名學員')} · ${text(type?.labelZh ?? lesson.lessonType)}</strong>
       <p>${text(location?.labelZh ?? '')} · ${text(lesson.status)}</p>
+      ${notes ? `<p class="lesson-notes">${text(notes)}</p>` : ''}
     </div>
   </article>`;
 }
@@ -241,11 +247,13 @@ function renderStudents() {
           const student = state.data.students.find((item) => item.id === lesson.studentId);
           const location = state.data.locations.find((item) => item.id === lesson.locationId);
           const type = state.data.lessonTypes[lesson.lessonType];
+          const notes = lessonNotes(lesson);
           return `<article class="card">
             <span class="status">${text(lesson.status)}</span>
             <h3>${text(student?.name)} · ${text(type?.labelZh)}</h3>
             <p>${formatDate(lesson.scheduledStart)}</p>
             <p><strong>地點：${text(location?.labelZh || '未設定')}</strong></p>
+            ${notes ? `<p class="lesson-notes">${text(notes)}</p>` : ''}
             <div class="actions" data-lesson-actions="${lesson.id}">
               <button type="button" class="secondary" data-reschedule>改期草稿</button>
               <button type="button" class="secondary" data-weather>天氣通知草稿</button>
