@@ -57,8 +57,23 @@ main { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
   border: 1px solid #eac54f;
   border-radius: 0.6rem;
 }
+.token-panel[hidden], .session-bar[hidden] { display: none; }
 .token-panel label { flex: 1; }
 .token-panel input { margin-top: 0; }
+.session-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem 1rem;
+  color: var(--navy);
+  background: var(--green-light);
+  border: 1px solid #86efac;
+  border-radius: 0.6rem;
+}
+.session-bar p { margin: 0; font-size: 0.9rem; font-weight: 700; }
+.session-bar button { flex: 0 0 auto; }
 .notice { margin: 1rem 0; padding: 0.9rem; border-radius: 0.5rem; background: var(--green-light); }
 .notice.is-error { color: var(--danger); background: #fee4e2; }
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1rem 0; }
@@ -254,7 +269,7 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
 .calendar-lesson.is-cancelled { opacity: 0.58; border-left-color: var(--danger); text-decoration: line-through; }
 
 @media (max-width: 760px) {
-  .topbar, .token-panel, .section-heading, .workflow-head { align-items: stretch; flex-direction: column; }
+  .topbar, .token-panel, .session-bar, .section-heading, .workflow-head { align-items: stretch; flex-direction: column; }
   .stats, .grid-two, .grid-three { grid-template-columns: 1fr; }
   .policy-badge { align-self: flex-start; }
   .today-date { align-self: flex-start; }

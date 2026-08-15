@@ -1,6 +1,45 @@
+const TOKEN_KEY = 'ops-admin-token';
+const TOKEN_SAVED_AT_KEY = 'ops-admin-token-saved-at';
+const TOKEN_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000;
+
+function readStoredToken() {
+  const localToken = localStorage.getItem(TOKEN_KEY);
+  if (localToken) {
+    const savedAt = Number(localStorage.getItem(TOKEN_SAVED_AT_KEY) || 0);
+    if (savedAt && Date.now() - savedAt > TOKEN_MAX_AGE_MS) {
+      clearStoredToken();
+      return '';
+    }
+    return localToken;
+  }
+  const sessionToken = sessionStorage.getItem(TOKEN_KEY);
+  if (sessionToken) {
+    persistToken(sessionToken);
+    sessionStorage.removeItem(TOKEN_KEY);
+    return sessionToken;
+  }
+  return '';
+}
+
+function persistToken(token) {
+  if (!token) {
+    clearStoredToken();
+    return;
+  }
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(TOKEN_SAVED_AT_KEY, String(Date.now()));
+  sessionStorage.removeItem(TOKEN_KEY);
+}
+
+function clearStoredToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_SAVED_AT_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+}
+
 const state = {
   data: null,
-  token: sessionStorage.getItem('ops-admin-token') || '',
+  token: readStoredToken(),
   calendarYear: null,
   calendarMonth: null,
   selectedDate: null,
@@ -20,7 +59,15 @@ function headers() {
 async function api(path, options = {}) {
   const response = await fetch(path, { ...options, headers: { ...headers(), ...options.headers } });
   const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error || `Request failed: ${response.status}`);
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearStoredToken();
+      state.token = '';
+      state.data = null;
+      renderSession();
+    }
+    throw new Error(payload.error || `Request failed: ${response.status}`);
+  }
   return payload;
 }
 
@@ -562,6 +609,7 @@ function renderAgents() {
 
 async function load() {
   state.data = await api('/api/bootstrap');
+  renderSession();
   renderStats();
   renderSelects();
   renderStudents();
@@ -569,6 +617,17 @@ async function load() {
   renderBrief();
   renderAgents();
   renderCalendar();
+}
+
+function renderSession() {
+  const panel = $('[data-token-panel]');
+  const signedIn = $('[data-session]');
+  const connected = Boolean(state.token && state.data);
+  panel.hidden = connected;
+  signedIn.hidden = !connected;
+  if (connected) {
+    $('[data-session-label]').textContent = '已記住登入 · 約 180 日內唔使再輸入 Token';
+  }
 }
 
 $$('[data-tab]').forEach((tab) => {
@@ -582,13 +641,31 @@ $$('[data-tab]').forEach((tab) => {
 
 $('[data-save-token]').addEventListener('click', async () => {
   state.token = $('[data-token]').value.trim();
-  sessionStorage.setItem('ops-admin-token', state.token);
+  persistToken(state.token);
   try {
     await load();
-    notice('已連接營運系統。');
+    notice('已連接並記住登入。下次開啟唔使再輸入 Token。');
   } catch (error) {
+    clearStoredToken();
+    state.token = '';
+    renderSession();
     notice(error.message, true);
   }
+});
+
+$('[data-logout]').addEventListener('click', () => {
+  clearStoredToken();
+  state.token = '';
+  state.data = null;
+  $('[data-token]').value = '';
+  renderSession();
+  $('[data-stats]').replaceChildren();
+  $('[data-students]').innerHTML = '';
+  $('[data-lessons]').innerHTML = '';
+  $('[data-workflows]').replaceChildren();
+  $('[data-today-lessons]').innerHTML = '';
+  $('[data-selected-lessons]').innerHTML = '';
+  notice('已登出。下次要再輸入 Token。');
 });
 
 $('[data-student-form]').addEventListener('submit', async (event) => {
@@ -686,6 +763,7 @@ $('[data-draft-reminders]').addEventListener('click', async () => {
   }
 });
 $('[data-token]').value = state.token;
+renderSession();
 
 const calendarNow = hongKongDateParts();
 state.calendarYear = Number(calendarNow.year);
@@ -701,4 +779,7 @@ function defaultDateTimeLocal(daysAhead = 0, hour = 12) {
 $('[name="scheduledStart"]').value = defaultDateTimeLocal(0, 12);
 $('[name="preferredStart"]').value = defaultDateTimeLocal(1, 9);
 
-load().catch((error) => notice(error.message, true));
+load().catch((error) => {
+  renderSession();
+  notice(error.message, true);
+});
