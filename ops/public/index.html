@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>PassPlus 營運控制台</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=20260815-edit-notes" />
+    <link rel="stylesheet" href="/styles.css?v=20260815-login" />
   </head>
   <body>
     <header class="topbar">
@@ -21,10 +21,15 @@
     <main>
       <section class="token-panel" data-token-panel>
         <label>
-          管理員 Token（本機開發可留空）
+          管理員 Token（輸入一次後會喺呢部裝置記住約 180 日）
           <input type="password" data-token autocomplete="current-password" />
         </label>
-        <button type="button" data-save-token>連接</button>
+        <button type="button" data-save-token>連接並記住</button>
+      </section>
+
+      <section class="session-bar" data-session hidden>
+        <p data-session-label>已記住登入</p>
+        <button type="button" class="secondary" data-logout>登出</button>
       </section>
 
       <div class="notice" data-notice hidden></div>
@@ -220,6 +225,6 @@
       </article>
     </template>
 
-    <script type="module" src="/app.js?v=20260815-edit-notes"></script>
+    <script type="module" src="/app.js?v=20260815-login"></script>
   </body>
 </html>
