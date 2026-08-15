@@ -117,7 +117,7 @@ function calendarLessonCard(lesson) {
   const type = state.data.lessonTypes[lesson.lessonType];
   const notes = lessonNotes(lesson);
   const showEnd = hasLessonEndTime(lesson);
-  return `<article class="calendar-lesson ${lesson.status === 'cancelled' ? 'is-cancelled' : ''} ${showEnd ? '' : 'is-start-only'}">
+  return `<article class="calendar-lesson ${lesson.status === 'cancelled' ? 'is-cancelled' : ''} ${showEnd ? '' : 'is-start-only'}" data-lesson-card="${lesson.id}">
     <time datetime="${text(lesson.scheduledStart)}" class="${showEnd ? '' : 'is-start-only'}">
       <span class="lesson-time-start">${formatTime(lesson.scheduledStart)}</span>
       ${showEnd ? `<span class="lesson-time-end">${formatTime(lessonEndTime(lesson.scheduledStart, lesson.durationMinutes))}</span>` : ''}
@@ -125,7 +125,17 @@ function calendarLessonCard(lesson) {
     <div>
       <strong>${text(student?.name ?? '未命名學員')} · ${text(type?.labelZh ?? lesson.lessonType)}</strong>
       <p>${text(location?.labelZh ?? '')} · ${text(lesson.status)}</p>
-      ${notes ? `<p class="lesson-notes">${text(notes)}</p>` : ''}
+      <div class="lesson-notes-block">
+        ${notes ? `<p class="lesson-notes">${text(notes)}</p>` : `<p class="lesson-notes is-empty">未有備註</p>`}
+        <button type="button" class="secondary notes-edit" data-edit-notes>編輯備註</button>
+        <form class="notes-form" data-notes-form hidden>
+          <textarea name="notes" rows="3" placeholder="例如：考試時間、帶走車匙、特別注意">${text(notes)}</textarea>
+          <div class="actions">
+            <button type="submit">儲存備註</button>
+            <button type="button" class="secondary" data-cancel-notes>取消</button>
+          </div>
+        </form>
+      </div>
     </div>
   </article>`;
 }
@@ -193,6 +203,8 @@ function renderCalendar() {
   $('[data-selected-lessons]').innerHTML = selectedLessons.length
     ? selectedLessons.map(calendarLessonCard).join('')
     : '<div class="empty">當日未有課堂</div>';
+
+  bindLessonNoteEditors(document);
 }
 
 function text(value) {
@@ -260,12 +272,22 @@ function renderStudents() {
           const location = state.data.locations.find((item) => item.id === lesson.locationId);
           const type = state.data.lessonTypes[lesson.lessonType];
           const notes = lessonNotes(lesson);
-          return `<article class="card">
+          return `<article class="card" data-lesson-card="${lesson.id}">
             <span class="status">${text(lesson.status)}</span>
             <h3>${text(student?.name)} · ${text(type?.labelZh)}</h3>
             <p>${formatDate(lesson.scheduledStart)}</p>
             <p><strong>地點：${text(location?.labelZh || '未設定')}</strong></p>
-            ${notes ? `<p class="lesson-notes">${text(notes)}</p>` : ''}
+            <div class="lesson-notes-block">
+              ${notes ? `<p class="lesson-notes">${text(notes)}</p>` : `<p class="lesson-notes is-empty">未有備註</p>`}
+              <button type="button" class="secondary notes-edit" data-edit-notes>編輯備註</button>
+              <form class="notes-form" data-notes-form hidden>
+                <textarea name="notes" rows="3" placeholder="例如：考試時間、帶走車匙、特別注意">${text(notes)}</textarea>
+                <div class="actions">
+                  <button type="submit">儲存備註</button>
+                  <button type="button" class="secondary" data-cancel-notes>取消</button>
+                </div>
+              </form>
+            </div>
             <div class="actions" data-lesson-actions="${lesson.id}">
               <button type="button" class="secondary" data-reschedule>改期草稿</button>
               <button type="button" class="secondary" data-weather>天氣通知草稿</button>
@@ -277,6 +299,8 @@ function renderStudents() {
         })
         .join('')
     : '<div class="empty">未建立課堂</div>';
+
+  bindLessonNoteEditors($('[data-lessons]'));
 
   $$('[data-lesson-actions]').forEach((actions) => {
     const lessonId = actions.dataset.lessonActions;
@@ -335,6 +359,43 @@ async function updateLessonStatus(lessonId, status) {
   } catch (error) {
     notice(error.message, true);
   }
+}
+
+async function saveLessonNotes(lessonId, notes) {
+  await api(`/api/lessons/${lessonId}/notes`, {
+    method: 'POST',
+    body: JSON.stringify({ notes }),
+  });
+  notice('備註已更新。');
+  await load();
+}
+
+function bindLessonNoteEditors(root = document) {
+  $$('[data-lesson-card]', root).forEach((card) => {
+    const lessonId = card.dataset.lessonCard;
+    const editButton = $('[data-edit-notes]', card);
+    const form = $('[data-notes-form]', card);
+    const cancelButton = $('[data-cancel-notes]', card);
+    if (!editButton || !form) return;
+
+    editButton.addEventListener('click', () => {
+      form.hidden = false;
+      editButton.hidden = true;
+      form.elements.notes.focus();
+    });
+    cancelButton?.addEventListener('click', () => {
+      form.hidden = true;
+      editButton.hidden = false;
+    });
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        await saveLessonNotes(lessonId, form.elements.notes.value);
+      } catch (error) {
+        notice(error.message, true);
+      }
+    });
+  });
 }
 
 function renderWorkflows() {

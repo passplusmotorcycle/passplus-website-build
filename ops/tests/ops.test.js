@@ -11,6 +11,7 @@ import {
   detectEscalations,
   draftLessonReminders,
   draftSchedulingProposal,
+  updateLessonNotes,
 } from '../lib/agents.js';
 import { schedulingConflicts } from '../lib/scheduling.js';
 import { createOpsServer } from '../server.js';
@@ -127,6 +128,29 @@ test('exam-day bike rental stores the given time without a 110-minute duration',
     scheduledStart: '2030-01-03T06:30:00.000Z',
   });
   assert.equal(laterLesson.lesson.durationMinutes, 110);
+});
+
+test('confirmed lesson notes can be updated after booking', async (t) => {
+  const { directory, store } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const data = store.snapshot();
+  const created = createConfirmedLesson(data, {
+    studentId: 'student-1',
+    lessonType: 'grand_opening_special',
+    locationId: 'so_kon_po',
+    scheduledStart: '2030-01-03T04:00:00.000Z',
+    notes: '初稿備註',
+  });
+  data.lessons.push(created.lesson);
+
+  const updated = updateLessonNotes(data, created.lesson.id, '  改期後帶走車匙  ');
+  assert.equal(updated.customerNotes, '改期後帶走車匙');
+  assert.equal(data.lessons[0].customerNotes, '改期後帶走車匙');
+
+  updateLessonNotes(data, created.lesson.id, '   ');
+  assert.equal(data.lessons[0].customerNotes, '');
+
+  assert.throws(() => updateLessonNotes(data, 'missing-lesson', 'x'), /Lesson not found/);
 });
 
 test('so kon po bookings keep selected location even when vehicle home base is tin kwong', async (t) => {

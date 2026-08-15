@@ -220,6 +220,37 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
   line-height: 1.4;
   white-space: pre-wrap;
 }
+.lesson-notes.is-empty {
+  color: var(--muted);
+  background: transparent;
+  border: 1px dashed var(--line);
+  font-weight: 500;
+}
+.lesson-notes-block { margin-top: 0.35rem; }
+.lesson-notes-block .notes-edit {
+  margin-top: 0.45rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+}
+.lesson-notes-block .notes-form {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.45rem;
+}
+.lesson-notes-block .notes-form[hidden] { display: none; }
+.lesson-notes-block textarea {
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  resize: vertical;
+}
+.lesson-notes-block .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
 .calendar-lesson.is-cancelled { opacity: 0.58; border-left-color: var(--danger); text-decoration: line-through; }
 
 @media (max-width: 760px) {
