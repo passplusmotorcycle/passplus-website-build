@@ -441,3 +441,11 @@ export function rejectWorkflow(data, workflowId, reason, actor) {
   }
   return { workflow, lesson };
 }
+
+export function updateLessonNotes(data, lessonId, notes) {
+  const lesson = data.lessons.find((item) => item.id === lessonId);
+  if (!lesson) throw new Error('Lesson not found');
+  lesson.customerNotes = String(notes ?? '').trim();
+  lesson.updatedAt = new Date().toISOString();
+  return lesson;
+}

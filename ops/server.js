@@ -13,6 +13,7 @@ import {
   draftRescheduleProposal,
   draftSchedulingProposal,
   rejectWorkflow,
+  updateLessonNotes,
 } from './lib/agents.js';
 import {
   assertEnum,
@@ -388,6 +389,16 @@ export async function createOpsServer(options = {}) {
           lesson.status = input.status;
           lesson.statusReason = input.reason?.trim() ?? '';
           lesson.updatedAt = new Date().toISOString();
+          return { entityType: 'lesson', entityId: lesson.id, value: lesson };
+        });
+        return json(res, 200, value);
+      }
+
+      const lessonNotesId = routeId(pathname, /^\/api\/lessons\/([^/]+)\/notes$/);
+      if (req.method === 'POST' && lessonNotesId) {
+        const input = await body(req);
+        const value = await store.transact(actor(req), 'lesson.notes', (data) => {
+          const lesson = updateLessonNotes(data, lessonNotesId, input.notes);
           return { entityType: 'lesson', entityId: lesson.id, value: lesson };
         });
         return json(res, 200, value);
