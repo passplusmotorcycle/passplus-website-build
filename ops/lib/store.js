@@ -7,6 +7,18 @@ function clone(value) {
   return structuredClone(value);
 }
 
+function normalizeLessonDurations(data) {
+  let changed = false;
+  for (const lesson of data.lessons ?? []) {
+    if (lesson?.lessonType !== 'exam_rental') continue;
+    if (lesson.durationMinutes !== 0) {
+      lesson.durationMinutes = 0;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 export class JsonStore {
   constructor(filePath) {
     this.filePath = filePath;
@@ -21,6 +33,9 @@ export class JsonStore {
     } catch (error) {
       if (error.code !== 'ENOENT') throw error;
       this.data = seedData();
+      await this.persist();
+    }
+    if (normalizeLessonDurations(this.data)) {
       await this.persist();
     }
     return this;

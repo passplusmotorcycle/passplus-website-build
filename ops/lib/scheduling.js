@@ -20,13 +20,39 @@ export function overlaps(startA, durationA, startB, durationB) {
 }
 
 function lessonDurationMinutes(lesson) {
+  if (lesson?.lessonType && lessonTypes[lesson.lessonType]) {
+    const typed = durationMinutesFor(lesson.lessonType);
+    // Exam rental is a pickup/marker time, never a 110-minute block—even if older
+    // records were saved with durationMinutes: 110.
+    if (typed === 0) return 0;
+  }
   if (lesson?.durationMinutes != null) return Number(lesson.durationMinutes);
   return durationMinutesFor(lesson?.lessonType ?? 'instructor');
 }
 
+function isExamRental(lesson) {
+  return lesson?.lessonType === 'exam_rental';
+}
+
+function conflictingResources(candidate, lesson) {
+  const resourceFields = ['studentId', 'instructorId', 'vehicleId', 'locationId'];
+  return resourceFields.filter((field) => {
+    if (!candidate[field] || candidate[field] !== lesson[field]) return false;
+    // Same student can have a tutor lesson and exam-day rental on the same day.
+    // Exam rental must not reserve the student or training location for 110 minutes.
+    if (
+      (field === 'studentId' || field === 'locationId') &&
+      (isExamRental(candidate) || isExamRental(lesson)) &&
+      candidate.lessonType !== lesson.lessonType
+    ) {
+      return false;
+    }
+    return true;
+  });
+}
+
 export function schedulingConflicts(data, candidate, ignoredLessonId = null) {
   const duration = lessonDurationMinutes(candidate);
-  const resourceFields = ['studentId', 'instructorId', 'vehicleId', 'locationId'];
 
   return data.lessons
     .filter(
@@ -41,14 +67,13 @@ export function schedulingConflicts(data, candidate, ignoredLessonId = null) {
         )
     )
     .flatMap((lesson) =>
-      resourceFields
-        .filter((field) => candidate[field] && candidate[field] === lesson[field])
-        .map((field) => ({
-          lessonId: lesson.id,
-          resource: field.replace(/Id$/, ''),
-          resourceId: candidate[field],
-          scheduledStart: lesson.scheduledStart,
-        }))
+      conflictingResources(candidate, lesson).map((field) => ({
+        lessonId: lesson.id,
+        resource: field.replace(/Id$/, ''),
+        resourceId: candidate[field],
+        scheduledStart: lesson.scheduledStart,
+        lessonType: lesson.lessonType,
+      }))
     );
 }
 
