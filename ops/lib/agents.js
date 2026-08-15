@@ -150,8 +150,16 @@ export function createConfirmedLesson(data, input, actor = 'human-admin') {
 
   const conflicts = schedulingConflicts(data, lesson);
   if (conflicts.length) {
-    const resources = [...new Set(conflicts.map((conflict) => conflict.resource))].join(', ');
-    throw new Error(`Schedule conflicts with: ${resources}`);
+    const labels = {
+      student: '學員',
+      instructor: '教練',
+      vehicle: '車輛',
+      location: '地點',
+    };
+    const resources = [...new Set(conflicts.map((conflict) => labels[conflict.resource] || conflict.resource))].join(
+      '、'
+    );
+    throw new Error(`時段衝突（${resources}）。考試當日租車唔會阻住同日加導師堂；如果仍然衝突，多數係車輛喺嗰段時間已有其他課堂。`);
   }
 
   return {

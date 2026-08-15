@@ -130,6 +130,35 @@ test('exam-day bike rental stores the given time without a 110-minute duration',
   assert.equal(laterLesson.lesson.durationMinutes, 110);
 });
 
+test('same student can book a tutor lesson before exam-day rental', async (t) => {
+  const { directory, store } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const data = store.snapshot();
+
+  // Older records saved exam rental as 110 minutes; scheduling must still treat it as a marker.
+  data.lessons.push({
+    id: 'exam-rental-legacy',
+    studentId: 'student-1',
+    lessonType: 'exam_rental',
+    locationId: 'so_kon_po',
+    instructorId: null,
+    vehicleId: 'vehicle-training-1',
+    durationMinutes: 110,
+    scheduledStart: '2030-01-03T07:45:00.000Z',
+    status: 'confirmed',
+  });
+
+  const tutor = createConfirmedLesson(data, {
+    studentId: 'student-1',
+    lessonType: 'instructor',
+    locationId: 'so_kon_po',
+    scheduledStart: '2030-01-03T04:00:00.000Z',
+    notes: '考試前導師堂',
+  });
+  assert.equal(tutor.lesson.status, 'confirmed');
+  assert.equal(tutor.lesson.studentId, 'student-1');
+});
+
 test('confirmed lesson notes can be updated after booking', async (t) => {
   const { directory, store } = await fixture();
   t.after(() => rm(directory, { recursive: true, force: true }));
