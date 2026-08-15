@@ -142,6 +142,19 @@ function applyI18n(lang) {
     lang === 'zh'
       ? document.body.dataset.titleZh || 'PassPlus Motorcycle HK'
       : document.body.dataset.titleEn || 'PassPlus Motorcycle HK';
+
+  const description =
+    lang === 'zh'
+      ? document.body.dataset.descriptionZh
+      : document.body.dataset.descriptionEn;
+  const metaDescription = document.querySelector('meta[name="description"]');
+  if (metaDescription && description) {
+    metaDescription.setAttribute('content', description);
+  }
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle) ogTitle.setAttribute('content', document.title);
+  const ogDescription = document.querySelector('meta[property="og:description"]');
+  if (ogDescription && description) ogDescription.setAttribute('content', description);
 }
 
 function hydrateStaticPrices() {
