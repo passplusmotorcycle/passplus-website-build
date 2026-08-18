@@ -2,6 +2,7 @@ import './styles.css';
 import { initAnalytics, track } from './analytics.js';
 import { dict } from './i18n.js';
 import { formatHkd, packageSaving, pricing } from './pricing.js';
+import { siteConfig } from './site.js';
 
 const PHONE = `tel:${pricing.phoneTel}`;
 const EMAIL = `mailto:${pricing.email}`;
@@ -444,6 +445,9 @@ function wireChrome() {
   });
   document.querySelectorAll('[data-email]').forEach((el) => {
     el.href = EMAIL;
+  });
+  document.querySelectorAll('[data-instagram]').forEach((el) => {
+    el.href = siteConfig.instagram;
   });
 
   document.body.classList.add('has-sticky-space');
