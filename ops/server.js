@@ -13,6 +13,7 @@ import {
   draftRescheduleProposal,
   draftSchedulingProposal,
   rejectWorkflow,
+  rescheduleConfirmedLesson,
   updateLessonNotes,
 } from './lib/agents.js';
 import {
@@ -400,6 +401,21 @@ export async function createOpsServer(options = {}) {
         const value = await store.transact(actor(req), 'lesson.notes', (data) => {
           const lesson = updateLessonNotes(data, lessonNotesId, input.notes);
           return { entityType: 'lesson', entityId: lesson.id, value: lesson };
+        });
+        return json(res, 200, value);
+      }
+
+      const lessonRescheduleId = routeId(pathname, /^\/api\/lessons\/([^/]+)\/reschedule$/);
+      if (req.method === 'POST' && lessonRescheduleId) {
+        const input = await body(req);
+        const value = await store.transact(actor(req), 'lesson.reschedule', (data) => {
+          const lesson = rescheduleConfirmedLesson(data, lessonRescheduleId, input);
+          return {
+            entityType: 'lesson',
+            entityId: lesson.id,
+            value: lesson,
+            metadata: { skippedApproval: true, messageSent: false },
+          };
         });
         return json(res, 200, value);
       }

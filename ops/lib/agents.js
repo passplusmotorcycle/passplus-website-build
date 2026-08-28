@@ -122,6 +122,16 @@ function resolveLessonResources(data, input) {
   return { student, location, type, instructorId, vehicleId };
 }
 
+function formatConflictResources(conflicts) {
+  const labels = {
+    student: '學員',
+    instructor: '教練',
+    vehicle: '車輛',
+    location: '地點',
+  };
+  return [...new Set(conflicts.map((conflict) => labels[conflict.resource] || conflict.resource))].join('、');
+}
+
 export function createConfirmedLesson(data, input, actor = 'human-admin') {
   validateRequired(input, ['studentId', 'lessonType', 'locationId', 'scheduledStart']);
   const { student, location, instructorId, vehicleId } = resolveLessonResources(data, input);
@@ -150,16 +160,9 @@ export function createConfirmedLesson(data, input, actor = 'human-admin') {
 
   const conflicts = schedulingConflicts(data, lesson);
   if (conflicts.length) {
-    const labels = {
-      student: '學員',
-      instructor: '教練',
-      vehicle: '車輛',
-      location: '地點',
-    };
-    const resources = [...new Set(conflicts.map((conflict) => labels[conflict.resource] || conflict.resource))].join(
-      '、'
+    throw new Error(
+      `時段衝突（${formatConflictResources(conflicts)}）。考試當日租車唔會阻住同日加導師堂；如果仍然衝突，多數係車輛喺嗰段時間已有其他課堂。`
     );
-    throw new Error(`時段衝突（${resources}）。考試當日租車唔會阻住同日加導師堂；如果仍然衝突，多數係車輛喺嗰段時間已有其他課堂。`);
   }
 
   return {
@@ -454,6 +457,33 @@ export function updateLessonNotes(data, lessonId, notes) {
   const lesson = data.lessons.find((item) => item.id === lessonId);
   if (!lesson) throw new Error('Lesson not found');
   lesson.customerNotes = String(notes ?? '').trim();
+  lesson.updatedAt = new Date().toISOString();
+  return lesson;
+}
+
+export function rescheduleConfirmedLesson(data, lessonId, input) {
+  validateRequired(input, ['scheduledStart']);
+  const lesson = data.lessons.find((item) => item.id === lessonId);
+  if (!lesson) throw new Error('Lesson not found');
+  if (['completed', 'cancelled', 'no_show', 'pending_approval'].includes(lesson.status)) {
+    throw new Error('This lesson cannot be rescheduled');
+  }
+
+  const scheduledStart = new Date(input.scheduledStart).toISOString();
+  if (!Number.isFinite(new Date(scheduledStart).getTime())) {
+    throw new Error('scheduledStart must be a valid ISO date');
+  }
+
+  const candidate = { ...lesson, scheduledStart };
+  const conflicts = schedulingConflicts(data, candidate, lesson.id);
+  if (conflicts.length) {
+    throw new Error(
+      `時段衝突（${formatConflictResources(conflicts)}）。考試當日租車唔會阻住同日加導師堂；如果仍然衝突，多數係車輛喺嗰段時間已有其他課堂。`
+    );
+  }
+
+  lesson.scheduledStart = scheduledStart;
+  if (lesson.status === 'approved') lesson.status = 'confirmed';
   lesson.updatedAt = new Date().toISOString();
   return lesson;
 }

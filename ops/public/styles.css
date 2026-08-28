@@ -266,6 +266,35 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
   flex-wrap: wrap;
   gap: 0.45rem;
 }
+.lesson-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+.lesson-actions .reschedule-form,
+.card-reschedule-form {
+  flex-basis: 100%;
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.15rem;
+}
+.lesson-actions .reschedule-form[hidden],
+.card-reschedule-form[hidden] { display: none; }
+.reschedule-label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.reschedule-label input {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  font: inherit;
+}
 .calendar-lesson.is-cancelled { opacity: 0.58; border-left-color: var(--danger); text-decoration: line-through; }
 
 @media (max-width: 760px) {
