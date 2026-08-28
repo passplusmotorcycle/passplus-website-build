@@ -11,6 +11,7 @@ import {
   detectEscalations,
   draftLessonReminders,
   draftSchedulingProposal,
+  rescheduleConfirmedLesson,
   updateLessonNotes,
 } from '../lib/agents.js';
 import { schedulingConflicts } from '../lib/scheduling.js';
@@ -180,6 +181,54 @@ test('confirmed lesson notes can be updated after booking', async (t) => {
   assert.equal(data.lessons[0].customerNotes, '');
 
   assert.throws(() => updateLessonNotes(data, 'missing-lesson', 'x'), /Lesson not found/);
+});
+
+test('confirmed lesson can be rescheduled directly with conflict checks', async (t) => {
+  const { directory, store } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const data = store.snapshot();
+  const created = createConfirmedLesson(data, {
+    studentId: 'student-1',
+    lessonType: 'instructor',
+    locationId: 'tin_kwong_road',
+    scheduledStart: '2030-01-03T04:00:00.000Z',
+  });
+  data.lessons.push(created.lesson);
+
+  const rescheduled = rescheduleConfirmedLesson(data, created.lesson.id, {
+    scheduledStart: '2030-01-04T04:00:00.000Z',
+  });
+  assert.equal(rescheduled.scheduledStart, '2030-01-04T04:00:00.000Z');
+  assert.equal(rescheduled.status, 'confirmed');
+  assert.equal(schedulingConflicts(data, rescheduled, rescheduled.id).length, 0);
+
+  created.lesson.status = 'cancelled';
+  assert.throws(
+    () =>
+      rescheduleConfirmedLesson(data, created.lesson.id, {
+        scheduledStart: '2030-01-06T04:00:00.000Z',
+      }),
+    /cannot be rescheduled/
+  );
+
+  created.lesson.status = 'confirmed';
+
+  data.lessons.push(
+    createConfirmedLesson(data, {
+      studentId: 'student-1',
+      lessonType: 'instructor',
+      locationId: 'tin_kwong_road',
+      scheduledStart: '2030-01-05T04:00:00.000Z',
+    }).lesson
+  );
+
+  assert.throws(
+    () =>
+      rescheduleConfirmedLesson(data, created.lesson.id, {
+        scheduledStart: '2030-01-05T04:00:00.000Z',
+      }),
+    /時段衝突/
+  );
 });
 
 test('so kon po bookings keep selected location even when vehicle home base is tin kwong', async (t) => {
