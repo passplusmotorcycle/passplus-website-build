@@ -14,6 +14,7 @@ import {
   rescheduleConfirmedLesson,
   updateLessonNotes,
 } from '../lib/agents.js';
+import { buildAccountingReport, lessonAmountHkd } from '../lib/accounting.js';
 import { schedulingConflicts } from '../lib/scheduling.js';
 import { createOpsServer } from '../server.js';
 import { lessonTypes } from '../lib/domain.js';
@@ -67,6 +68,31 @@ test('grand opening special lesson uses confirmed price and resources', () => {
     needsVehicle: true,
     durationMinutes: 110,
   });
+});
+
+test('internal staff lesson types are priced and not on the public site', () => {
+  assert.equal(lessonTypes.instructor_500.priceHkd, 500);
+  assert.equal(lessonTypes.instructor_800.priceHkd, 800);
+  assert.equal(lessonTypes.self_practice_250.priceHkd, 250);
+  assert.equal(lessonTypes.instructor_500.internal, true);
+  assert.equal(lessonTypes.instructor_800.needsInstructor, true);
+  assert.equal(lessonTypes.self_practice_250.needsInstructor, false);
+  assert.equal(lessonTypes.self_practice_250.needsVehicle, true);
+});
+
+test('internal $800 instructor lesson can be booked like a public tutor lesson', async (t) => {
+  const { directory, store } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const data = store.snapshot();
+  const result = createConfirmedLesson(data, {
+    studentId: 'student-1',
+    lessonType: 'instructor_800',
+    locationId: 'tin_kwong_road',
+    scheduledStart: '2030-01-03T04:00:00.000Z',
+  });
+  assert.equal(result.lesson.status, 'confirmed');
+  assert.equal(result.lesson.priceSnapshot.amountHkd, 800);
+  assert.equal(result.lesson.durationMinutes, 110);
 });
 
 test('direct confirmed lesson skips approval and lands on the calendar', async (t) => {
@@ -301,6 +327,63 @@ test('reminders are drafted only for lessons in next 24 hours', async (t) => {
   assert.equal(reminders.length, 1);
   assert.equal(reminders[0].status, 'pending_approval');
   assert.match(reminders[0].draftContent, /提提你/);
+});
+
+test('accounting report splits realized booked cancelled and payments', async (t) => {
+  const { directory, store } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const data = store.snapshot();
+  data.lessons.push(
+    {
+      id: 'lesson-done',
+      studentId: 'student-1',
+      lessonType: 'instructor',
+      locationId: 'tin_kwong_road',
+      scheduledStart: '2026-09-03T04:00:00.000Z',
+      status: 'completed',
+      priceSnapshot: { amountHkd: 850 },
+    },
+    {
+      id: 'lesson-booked',
+      studentId: 'student-1',
+      lessonType: 'self_practice',
+      locationId: 'so_kon_po',
+      scheduledStart: '2026-09-10T04:00:00.000Z',
+      status: 'confirmed',
+      priceSnapshot: { amountHkd: 400 },
+    },
+    {
+      id: 'lesson-cancelled',
+      studentId: 'student-1',
+      lessonType: 'exam_rental',
+      locationId: 'so_kon_po',
+      scheduledStart: '2026-08-20T04:00:00.000Z',
+      status: 'cancelled',
+    }
+  );
+  data.payments.push({
+    id: 'pay-1',
+    studentId: 'student-1',
+    amountHkd: 850,
+    status: 'paid',
+    createdAt: '2026-09-03T05:00:00.000Z',
+  });
+
+  assert.equal(lessonAmountHkd(data.lessons[2]), 500);
+
+  const all = buildAccountingReport(data, { now: new Date('2026-09-05T00:00:00.000Z') });
+  assert.equal(all.totals.realizedHkd, 850);
+  assert.equal(all.totals.bookedHkd, 400);
+  assert.equal(all.totals.cancelledHkd, 500);
+  assert.equal(all.byLessonType.instructor.realizedHkd, 850);
+  assert.equal(all.byLocation.so_kon_po.bookedHkd, 400);
+  assert.equal(all.payments.paid.amountHkd, 850);
+  assert.ok(all.availableMonths.includes('2026-09'));
+
+  const september = buildAccountingReport(data, { month: '2026-09' });
+  assert.equal(september.totals.cancelledHkd, 0);
+  assert.equal(september.totals.realizedHkd, 850);
+  assert.equal(september.lines.length, 2);
 });
 
 test('API requires bearer token when configured', async (t) => {
