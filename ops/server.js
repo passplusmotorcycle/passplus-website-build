@@ -23,6 +23,7 @@ import {
   statuses,
   validateRequired,
 } from './lib/domain.js';
+import { buildAccountingReport } from './lib/accounting.js';
 import { buildDailyBrief, buildPilotMetrics } from './lib/scheduling.js';
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
@@ -160,6 +161,7 @@ export async function createOpsServer(options = {}) {
           lessonTypes,
           agents: agentRegistry,
           metrics: buildPilotMetrics(data),
+          accounting: buildAccountingReport(data),
           dailyBrief: buildDailyBrief(data, new Date(Date.now() + 24 * 60 * 60_000)),
           policy: {
             mode: 'draft_only',
@@ -422,6 +424,13 @@ export async function createOpsServer(options = {}) {
 
       if (req.method === 'GET' && pathname === '/api/metrics') {
         return json(res, 200, buildPilotMetrics(store.snapshot()));
+      }
+      if (req.method === 'GET' && pathname === '/api/reports/accounting') {
+        const month = url.searchParams.get('month');
+        if (month && !/^\d{4}-\d{2}$/.test(month)) {
+          throw new Error('month must be YYYY-MM');
+        }
+        return json(res, 200, buildAccountingReport(store.snapshot(), { month }));
       }
       if (req.method === 'GET' && pathname === '/api/reports/tomorrow') {
         return json(

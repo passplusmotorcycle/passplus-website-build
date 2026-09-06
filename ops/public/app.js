@@ -656,6 +656,131 @@ function createWorkflowCard(workflow, isPending) {
   return node;
 }
 
+function formatHkd(value) {
+  return `HK$${Math.round(Number(value) || 0).toLocaleString('en-HK')}`;
+}
+
+function lessonStatusLabel(status) {
+  return (
+    {
+      requested: '已查詢',
+      draft: '草稿',
+      pending_approval: '待批准',
+      approved: '已批准',
+      confirmed: '已確認',
+      completed: '已完成',
+      cancelled: '已取消',
+      no_show: '缺席',
+    }[status] ?? status
+  );
+}
+
+function renderAccounting() {
+  const report = state.data.accounting;
+  if (!report) return;
+  $('[data-accounting-note]').textContent = report.note;
+  const monthSelect = $('[data-accounting-month]');
+  const current = monthSelect.value;
+  monthSelect.innerHTML = ['<option value="">全部月份</option>']
+    .concat((report.availableMonths ?? []).map((month) => `<option value="${month}">${month}</option>`))
+    .join('');
+  if ([...monthSelect.options].some((option) => option.value === current)) {
+    monthSelect.value = current;
+  }
+
+  const totals = report.totals;
+  $('[data-accounting-stats]').innerHTML = [
+    ['已實現收入', formatHkd(totals.realizedHkd), `${totals.realizedCount} 堂已完成`],
+    ['已預訂金額', formatHkd(totals.bookedHkd), `${totals.bookedCount} 堂未上`],
+    ['取消金額', formatHkd(totals.cancelledHkd), `${totals.cancelledCount} 堂`],
+    ['缺席金額', formatHkd(totals.noShowHkd), `${totals.noShowCount} 堂`],
+  ]
+    .map(
+      ([label, value, hint]) =>
+        `<article class="stat"><span>${label}</span><strong>${value}</strong><span>${hint}</span></article>`
+    )
+    .join('');
+
+  const typeRows = Object.entries(report.byLessonType)
+    .filter(([, bucket]) => bucket.count)
+    .map(([type, bucket]) => {
+      const label = state.data.lessonTypes[type]?.labelZh ?? type;
+      return `<tr>
+        <td>${text(label)}</td>
+        <td>${bucket.count}</td>
+        <td>${formatHkd(bucket.realizedHkd)}</td>
+        <td>${formatHkd(bucket.bookedHkd)}</td>
+        <td>${formatHkd(bucket.cancelledHkd)}</td>
+      </tr>`;
+    });
+  $('[data-accounting-types]').innerHTML = typeRows.join('') || '<tr><td colspan="5">未有課堂</td></tr>';
+
+  const locationRows = Object.entries(report.byLocation)
+    .filter(([, bucket]) => bucket.count)
+    .map(([id, bucket]) => {
+      const label = state.data.locations.find((location) => location.id === id)?.labelZh ?? id;
+      return `<tr>
+        <td>${text(label)}</td>
+        <td>${bucket.count}</td>
+        <td>${formatHkd(bucket.realizedHkd)}</td>
+        <td>${formatHkd(bucket.bookedHkd)}</td>
+        <td>${formatHkd(bucket.cancelledHkd)}</td>
+      </tr>`;
+    });
+  $('[data-accounting-locations]').innerHTML = locationRows.join('') || '<tr><td colspan="5">未有課堂</td></tr>';
+
+  const monthRows = Object.entries(report.byMonth)
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(
+      ([month, bucket]) => `<tr>
+        <td>${month}</td>
+        <td>${bucket.count}</td>
+        <td>${formatHkd(bucket.realizedHkd)}</td>
+        <td>${formatHkd(bucket.bookedHkd)}</td>
+        <td>${formatHkd(bucket.cancelledHkd + bucket.noShowHkd)}</td>
+      </tr>`
+    );
+  $('[data-accounting-months]').innerHTML = monthRows.join('') || '<tr><td colspan="5">未有課堂</td></tr>';
+
+  const payments = report.payments;
+  $('[data-accounting-payments]').innerHTML = [
+    ['已收款', payments.paid.amountHkd, payments.paid.count],
+    ['未收（報價／出單）', payments.outstandingHkd, payments.quoted.count + payments.invoiced.count],
+    ['已退款', payments.refunded.amountHkd, payments.refunded.count],
+  ]
+    .map(
+      ([label, amount, count]) =>
+        `<article class="stat"><span>${label}</span><strong>${formatHkd(amount)}</strong><span>${count} 筆</span></article>`
+    )
+    .join('');
+
+  const studentRows = (report.studentLeaderboard ?? []).map((row) => {
+    const student = state.data.students.find((item) => item.id === row.studentId);
+    return `<tr>
+      <td>${text(student?.name ?? '未命名學員')}</td>
+      <td>${formatHkd(row.realizedHkd)}</td>
+      <td>${formatHkd(row.bookedHkd)}</td>
+      <td>${row.count}</td>
+    </tr>`;
+  });
+  $('[data-accounting-students]').innerHTML = studentRows.join('') || '<tr><td colspan="4">未有學員金額</td></tr>';
+
+  const lineRows = (report.lines ?? []).map((line) => {
+    const student = state.data.students.find((item) => item.id === line.studentId);
+    const type = state.data.lessonTypes[line.lessonType];
+    const location = state.data.locations.find((item) => item.id === line.locationId);
+    return `<tr>
+      <td>${formatDate(line.scheduledStart)}</td>
+      <td>${text(student?.name ?? '未命名學員')}</td>
+      <td>${text(type?.labelZh ?? line.lessonType)}</td>
+      <td>${text(location?.labelZh ?? '')}</td>
+      <td>${lessonStatusLabel(line.status)}</td>
+      <td>${formatHkd(line.amountHkd)}</td>
+    </tr>`;
+  });
+  $('[data-accounting-lines]').innerHTML = lineRows.join('') || '<tr><td colspan="6">未有課堂明細</td></tr>';
+}
+
 function renderBrief() {
   const brief = state.data.dailyBrief;
   const blocks = [
@@ -701,6 +826,7 @@ async function load() {
   renderStudents();
   renderWorkflows();
   renderBrief();
+  renderAccounting();
   renderAgents();
   renderCalendar();
 }
@@ -804,6 +930,36 @@ $('[data-schedule-form]').addEventListener('submit', async (event) => {
     notice('已建立排堂草稿，等待真人批准。');
     await load();
     $('[data-tab="approvals"]').click();
+  } catch (error) {
+    notice(error.message, true);
+  }
+});
+
+$('[data-accounting-month]').addEventListener('change', async (event) => {
+  try {
+    const month = event.currentTarget.value;
+    state.data.accounting = await api(
+      month ? `/api/reports/accounting?month=${encodeURIComponent(month)}` : '/api/reports/accounting'
+    );
+    renderAccounting();
+  } catch (error) {
+    notice(error.message, true);
+  }
+});
+
+$('[data-payment-form]').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const input = Object.fromEntries(new FormData(form));
+  if (!input.studentId) return notice('請先新增學員。', true);
+  input.amountHkd = Number(input.amountHkd);
+  if (!Number.isFinite(input.amountHkd)) return notice('金額不正確。', true);
+  try {
+    await api('/api/payments', { method: 'POST', body: JSON.stringify(input) });
+    form.reset();
+    notice('付款紀錄已儲存。');
+    await load();
+    $('[data-tab="accounting"]').click();
   } catch (error) {
     notice(error.message, true);
   }

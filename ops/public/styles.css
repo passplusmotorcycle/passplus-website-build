@@ -77,6 +77,14 @@ main { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
 .notice { margin: 1rem 0; padding: 0.9rem; border-radius: 0.5rem; background: var(--green-light); }
 .notice.is-error { color: var(--danger); background: #fee4e2; }
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1rem 0; }
+.compact-stats { grid-template-columns: repeat(3, 1fr); }
+.inline-filter {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  min-width: 10rem;
+}
+.inline-filter select { margin: 0; }
 .stat, .card {
   padding: 1.15rem;
   border: 1px solid var(--line);
@@ -299,7 +307,7 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
 
 @media (max-width: 760px) {
   .topbar, .token-panel, .session-bar, .section-heading, .workflow-head { align-items: stretch; flex-direction: column; }
-  .stats, .grid-two, .grid-three { grid-template-columns: 1fr; }
+  .stats, .compact-stats, .grid-two, .grid-three { grid-template-columns: 1fr; }
   .policy-badge { align-self: flex-start; }
   .today-date { align-self: flex-start; }
   .calendar-card, .selected-day { padding: 0.65rem; }

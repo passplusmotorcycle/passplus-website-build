@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>PassPlus 營運控制台</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=20260815-login" />
+    <link rel="stylesheet" href="/styles.css?v=20260905-accounting" />
   </head>
   <body>
     <header class="topbar">
@@ -42,6 +42,7 @@
         <button data-tab="approvals">待批准 <span data-pending-count>0</span></button>
         <button data-tab="students">學員</button>
         <button data-tab="brief">明日簡報</button>
+        <button data-tab="accounting">會計報告</button>
         <button data-tab="agents">其他部門</button>
       </nav>
 
@@ -186,6 +187,132 @@
         <div class="grid-three" data-brief></div>
       </section>
 
+      <section class="panel" data-panel="accounting">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">FINANCE SNAPSHOT</p>
+            <h2>會計報告</h2>
+          </div>
+          <label class="inline-filter">
+            月份
+            <select data-accounting-month>
+              <option value="">全部月份</option>
+            </select>
+          </label>
+        </div>
+        <p class="footnote" data-accounting-note></p>
+        <section class="stats" data-accounting-stats aria-label="會計摘要"></section>
+        <div class="grid-two">
+          <article class="card">
+            <h3>課堂類型</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>類型</th>
+                    <th>堂數</th>
+                    <th>已實現</th>
+                    <th>已預訂</th>
+                    <th>取消</th>
+                  </tr>
+                </thead>
+                <tbody data-accounting-types></tbody>
+              </table>
+            </div>
+          </article>
+          <article class="card">
+            <h3>地點</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>地點</th>
+                    <th>堂數</th>
+                    <th>已實現</th>
+                    <th>已預訂</th>
+                    <th>取消</th>
+                  </tr>
+                </thead>
+                <tbody data-accounting-locations></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+        <div class="grid-two">
+          <article class="card">
+            <h3>按月份</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>月份</th>
+                    <th>堂數</th>
+                    <th>已實現</th>
+                    <th>已預訂</th>
+                    <th>取消／缺席</th>
+                  </tr>
+                </thead>
+                <tbody data-accounting-months></tbody>
+              </table>
+            </div>
+          </article>
+          <article class="card">
+            <h3>付款紀錄</h3>
+            <p class="footnote">付款要人手登記，唔會自動跟課堂收費。</p>
+            <div class="stats compact-stats" data-accounting-payments></div>
+            <form data-payment-form>
+              <h3>記錄一筆付款</h3>
+              <label>學員<select name="studentId" data-student-select required></select></label>
+              <label>金額（HK$）<input name="amountHkd" type="number" min="0" step="1" required /></label>
+              <label>
+                狀態
+                <select name="status">
+                  <option value="paid">已收款</option>
+                  <option value="invoiced">已出單</option>
+                  <option value="quoted">已報價</option>
+                </select>
+              </label>
+              <label>方式<input name="method" placeholder="例如：轉數快／現金" /></label>
+              <button type="submit">儲存付款</button>
+            </form>
+          </article>
+        </div>
+        <article class="card">
+          <h3>學員金額（前 10）</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>學員</th>
+                  <th>已實現</th>
+                  <th>已預訂</th>
+                  <th>堂數</th>
+                </tr>
+              </thead>
+              <tbody data-accounting-students></tbody>
+            </table>
+          </div>
+        </article>
+        <article class="card">
+          <h3>課堂明細</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>日期</th>
+                  <th>學員</th>
+                  <th>課堂</th>
+                  <th>地點</th>
+                  <th>狀態</th>
+                  <th>金額</th>
+                </tr>
+              </thead>
+              <tbody data-accounting-lines></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
       <section class="panel" data-panel="agents">
         <div class="section-heading">
           <div>
@@ -225,6 +352,6 @@
       </article>
     </template>
 
-    <script type="module" src="/app.js?v=20260815-login"></script>
+    <script type="module" src="/app.js?v=20260905-accounting"></script>
   </body>
 </html>

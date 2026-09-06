@@ -52,6 +52,33 @@ export const lessonTypes = Object.freeze({
     needsVehicle: true,
     durationMinutes: 0,
   },
+  instructor_500: {
+    labelZh: '導師堂 $500（內部）',
+    labelEn: 'Internal instructor lesson $500',
+    priceHkd: 500,
+    needsInstructor: true,
+    needsVehicle: true,
+    durationMinutes: LESSON_DURATION_MINUTES,
+    internal: true,
+  },
+  instructor_800: {
+    labelZh: '導師堂 $800（內部）',
+    labelEn: 'Internal instructor lesson $800',
+    priceHkd: 800,
+    needsInstructor: true,
+    needsVehicle: true,
+    durationMinutes: LESSON_DURATION_MINUTES,
+    internal: true,
+  },
+  self_practice_250: {
+    labelZh: '自堂 $250（內部）',
+    labelEn: 'Internal self-practice $250',
+    priceHkd: 250,
+    needsInstructor: false,
+    needsVehicle: true,
+    durationMinutes: LESSON_DURATION_MINUTES,
+    internal: true,
+  },
 });
 
 export function durationMinutesFor(lessonType) {
