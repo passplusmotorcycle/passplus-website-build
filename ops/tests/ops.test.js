@@ -13,6 +13,7 @@ import {
   draftSchedulingProposal,
   rescheduleConfirmedLesson,
   updateLessonNotes,
+  updateLessonType,
 } from '../lib/agents.js';
 import { buildAccountingReport, lessonAmountHkd } from '../lib/accounting.js';
 import { schedulingConflicts } from '../lib/scheduling.js';
@@ -384,6 +385,34 @@ test('accounting report splits realized booked cancelled and payments', async (t
   assert.equal(september.totals.cancelledHkd, 0);
   assert.equal(september.totals.realizedHkd, 850);
   assert.equal(september.lines.length, 2);
+});
+
+test('confirmed lesson type can be changed from self-practice to instructor', async (t) => {
+  const { directory, store } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const data = store.snapshot();
+  const created = createConfirmedLesson(data, {
+    studentId: 'student-1',
+    lessonType: 'self_practice',
+    locationId: 'tin_kwong_road',
+    scheduledStart: '2030-01-03T04:00:00.000Z',
+  });
+  data.lessons.push(created.lesson);
+  assert.equal(created.lesson.instructorId, null);
+  assert.equal(created.lesson.priceSnapshot.amountHkd, 400);
+
+  const updated = updateLessonType(data, created.lesson.id, { lessonType: 'instructor' });
+  assert.equal(updated.lessonType, 'instructor');
+  assert.equal(updated.priceSnapshot.amountHkd, 850);
+  assert.equal(updated.durationMinutes, 110);
+  assert.ok(updated.instructorId);
+  assert.equal(schedulingConflicts(data, updated, updated.id).length, 0);
+
+  updated.status = 'cancelled';
+  assert.throws(
+    () => updateLessonType(data, created.lesson.id, { lessonType: 'self_practice' }),
+    /cannot be changed/
+  );
 });
 
 test('API requires bearer token when configured', async (t) => {

@@ -167,11 +167,31 @@ function toDateTimeLocalValue(iso) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+function lessonTypeOptionsHtml(selectedId) {
+  return Object.entries(state.data.lessonTypes)
+    .map(
+      ([id, item]) =>
+        `<option value="${id}" ${id === selectedId ? 'selected' : ''}>${text(item.labelZh)} · HK$${item.priceHkd}</option>`
+    )
+    .join('');
+}
+
 function lessonActionButtons(lesson) {
   if (!canModifyLesson(lesson)) return '';
   return `<div class="lesson-actions" data-lesson-actions="${lesson.id}">
+    <button type="button" class="secondary" data-type-toggle>改性質</button>
     <button type="button" class="secondary" data-reschedule-toggle>改時間</button>
     <button type="button" class="danger" data-cancel-lesson>取消</button>
+    <form class="reschedule-form" data-type-form hidden>
+      <label class="reschedule-label">
+        課堂性質
+        <select name="lessonType">${lessonTypeOptionsHtml(lesson.lessonType)}</select>
+      </label>
+      <div class="actions">
+        <button type="submit">儲存性質</button>
+        <button type="button" class="secondary" data-cancel-type>返回</button>
+      </div>
+    </form>
     <form class="reschedule-form" data-reschedule-form hidden>
       <label class="reschedule-label">
         新上課時間
@@ -365,6 +385,7 @@ function renderStudents() {
               </form>
             </div>
             <div class="actions" data-lesson-actions="${lesson.id}">
+              ${canModifyLesson(lesson) ? `<button type="button" class="secondary" data-type-toggle>改性質</button>` : ''}
               ${canModifyLesson(lesson) ? `<button type="button" class="secondary" data-reschedule-toggle>改時間</button>` : ''}
               <button type="button" class="secondary" data-reschedule-draft>改期草稿</button>
               <button type="button" class="secondary" data-weather>天氣通知草稿</button>
@@ -373,7 +394,17 @@ function renderStudents() {
               ${canModifyLesson(lesson) ? `<button type="button" class="danger" data-cancel-lesson>取消</button>` : ''}
             </div>
             ${canModifyLesson(lesson)
-              ? `<form class="reschedule-form card-reschedule-form" data-reschedule-form hidden>
+              ? `<form class="reschedule-form card-reschedule-form" data-type-form hidden>
+              <label class="reschedule-label">
+                課堂性質
+                <select name="lessonType">${lessonTypeOptionsHtml(lesson.lessonType)}</select>
+              </label>
+              <div class="actions">
+                <button type="submit">儲存性質</button>
+                <button type="button" class="secondary" data-cancel-type>返回</button>
+              </div>
+            </form>
+            <form class="reschedule-form card-reschedule-form" data-reschedule-form hidden>
               <label class="reschedule-label">
                 新上課時間
                 <input type="datetime-local" name="scheduledStart" value="${toDateTimeLocalValue(lesson.scheduledStart)}" required />
@@ -460,6 +491,42 @@ async function rescheduleLesson(lessonId, scheduledStart) {
   await load();
 }
 
+async function updateLessonType(lessonId, lessonType) {
+  if (!lessonType) throw new Error('請選擇課堂性質。');
+  await api(`/api/lessons/${lessonId}/type`, {
+    method: 'POST',
+    body: JSON.stringify({ lessonType }),
+  });
+  notice('課堂性質已更新。');
+  await load();
+}
+
+function bindTypeToggle(card, lessonId) {
+  if (!card) return;
+  const toggle = $('[data-type-toggle]', card);
+  const form = $('[data-type-form]', card);
+  const cancelButton = $('[data-cancel-type]', card);
+  if (!toggle || !form) return;
+
+  toggle.addEventListener('click', () => {
+    form.hidden = false;
+    toggle.hidden = true;
+    form.elements.lessonType.focus();
+  });
+  cancelButton?.addEventListener('click', () => {
+    form.hidden = true;
+    toggle.hidden = false;
+  });
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      await updateLessonType(lessonId, form.elements.lessonType.value);
+    } catch (error) {
+      notice(error.message, true);
+    }
+  });
+}
+
 function bindRescheduleToggle(card, lessonId) {
   if (!card) return;
   const toggle = $('[data-reschedule-toggle]', card);
@@ -490,6 +557,7 @@ function bindLessonActions(root = document) {
   $$('[data-lesson-card]', root).forEach((card) => {
     const lessonId = card.dataset.lessonCard;
     $('[data-cancel-lesson]', card)?.addEventListener('click', () => updateLessonStatus(lessonId, 'cancelled'));
+    bindTypeToggle(card, lessonId);
     bindRescheduleToggle(card, lessonId);
   });
 }

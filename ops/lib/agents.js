@@ -487,3 +487,46 @@ export function rescheduleConfirmedLesson(data, lessonId, input) {
   lesson.updatedAt = new Date().toISOString();
   return lesson;
 }
+
+export function updateLessonType(data, lessonId, input) {
+  validateRequired(input, ['lessonType']);
+  const lesson = data.lessons.find((item) => item.id === lessonId);
+  if (!lesson) throw new Error('Lesson not found');
+  if (['completed', 'cancelled', 'no_show', 'pending_approval'].includes(lesson.status)) {
+    throw new Error('This lesson type cannot be changed');
+  }
+  const type = lessonTypes[input.lessonType];
+  if (!type) throw new Error('Lesson type not found');
+  if (lesson.lessonType === input.lessonType) return lesson;
+
+  const resolved = resolveLessonResources(data, {
+    studentId: lesson.studentId,
+    lessonType: input.lessonType,
+    locationId: lesson.locationId,
+    instructorId: type.needsInstructor ? lesson.instructorId || undefined : undefined,
+    vehicleId: type.needsVehicle ? lesson.vehicleId || undefined : undefined,
+  });
+
+  const candidate = {
+    ...lesson,
+    lessonType: input.lessonType,
+    instructorId: type.needsInstructor ? resolved.instructorId : null,
+    vehicleId: type.needsVehicle ? resolved.vehicleId : null,
+    durationMinutes: durationMinutesFor(input.lessonType),
+  };
+  const conflicts = schedulingConflicts(data, candidate, lesson.id);
+  if (conflicts.length) {
+    throw new Error(
+      `時段衝突（${formatConflictResources(conflicts)}）。轉課堂性質後時長或資源需求有變，請改時間或揀另一個性質。`
+    );
+  }
+
+  lesson.lessonType = input.lessonType;
+  lesson.instructorId = candidate.instructorId;
+  lesson.vehicleId = candidate.vehicleId;
+  lesson.durationMinutes = candidate.durationMinutes;
+  lesson.priceSnapshot = priceSnapshot(input.lessonType);
+  if (lesson.status === 'approved') lesson.status = 'confirmed';
+  lesson.updatedAt = new Date().toISOString();
+  return lesson;
+}

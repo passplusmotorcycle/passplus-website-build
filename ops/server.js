@@ -15,6 +15,7 @@ import {
   rejectWorkflow,
   rescheduleConfirmedLesson,
   updateLessonNotes,
+  updateLessonType,
 } from './lib/agents.js';
 import {
   assertEnum,
@@ -412,6 +413,21 @@ export async function createOpsServer(options = {}) {
         const input = await body(req);
         const value = await store.transact(actor(req), 'lesson.reschedule', (data) => {
           const lesson = rescheduleConfirmedLesson(data, lessonRescheduleId, input);
+          return {
+            entityType: 'lesson',
+            entityId: lesson.id,
+            value: lesson,
+            metadata: { skippedApproval: true, messageSent: false },
+          };
+        });
+        return json(res, 200, value);
+      }
+
+      const lessonTypeId = routeId(pathname, /^\/api\/lessons\/([^/]+)\/type$/);
+      if (req.method === 'POST' && lessonTypeId) {
+        const input = await body(req);
+        const value = await store.transact(actor(req), 'lesson.type', (data) => {
+          const lesson = updateLessonType(data, lessonTypeId, input);
           return {
             entityType: 'lesson',
             entityId: lesson.id,
