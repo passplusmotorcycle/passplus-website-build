@@ -26,6 +26,7 @@ export const dict = {
       call: '立即致電',
       process: '查看考牌流程',
       freeConsult: '免費諮詢',
+      instagram: 'Instagram',
     },
     whatsappPrefill: {
       general:
@@ -279,6 +280,7 @@ export const dict = {
       call: 'Call Now',
       process: 'View Licensing Guide',
       freeConsult: 'Free Consultation',
+      instagram: 'Instagram',
     },
     whatsappPrefill: {
       general:
