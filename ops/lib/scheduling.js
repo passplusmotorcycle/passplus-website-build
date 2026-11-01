@@ -1,4 +1,10 @@
-import { SLOT_STEP_MINUTES, durationMinutesFor, lessonTypes } from './domain.js';
+import {
+  SLOT_STEP_MINUTES,
+  activeOperationalNotices,
+  durationMinutesFor,
+  lessonTypes,
+  noticesForLocation,
+} from './domain.js';
 
 const ACTIVE_LESSON_STATUSES = new Set([
   'pending_approval',
@@ -206,6 +212,17 @@ export function buildDailyBrief(data, date = new Date()) {
     .filter((lesson) => formatter.format(new Date(lesson.scheduledStart)) === target)
     .sort((a, b) => new Date(a.scheduledStart) - new Date(b.scheduledStart));
 
+  const lessonLocationIds = [...new Set(lessons.map((lesson) => lesson.locationId).filter(Boolean))];
+  const relevantNotices = lessonLocationIds.length
+    ? [
+        ...new Map(
+          lessonLocationIds.flatMap((locationId) =>
+            noticesForLocation(data.operationalNotices, locationId).map((notice) => [notice.id, notice])
+          )
+        ).values(),
+      ]
+    : [];
+
   return {
     date: target,
     lessons,
@@ -217,5 +234,10 @@ export function buildDailyBrief(data, date = new Date()) {
     paymentAlerts: data.payments.filter(
       (payment) => payment.status === 'quoted' || payment.status === 'invoiced'
     ),
+    // Standing route notices stay on the brief even when tomorrow has no So Kon Po lessons.
+    operationalNotices: activeOperationalNotices(data.operationalNotices),
+    locationNotices: relevantNotices,
+    checkPlaybook:
+      activeOperationalNotices(data.operationalNotices).find((notice) => notice.kind === 'playbook') ?? null,
   };
 }
