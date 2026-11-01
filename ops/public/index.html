@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>PassPlus 營運控制台</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=20260905-accounting" />
+    <link rel="stylesheet" href="/styles.css?v=20261101-ops-notices" />
   </head>
   <body>
     <header class="topbar">
@@ -33,6 +33,17 @@
       </section>
 
       <div class="notice" data-notice hidden></div>
+
+      <section class="ops-alerts" data-ops-alerts hidden>
+        <div class="ops-alerts-head">
+          <div>
+            <p class="eyebrow">STANDING ROUTE NOTICES</p>
+            <h2>注意事項</h2>
+          </div>
+          <p class="footnote">只跟封路阻路線 ＋ 學牌禁行 · 普通改道唔入 · 可喺下面改字</p>
+        </div>
+        <div class="ops-alert-list" data-ops-alert-list></div>
+      </section>
 
       <section class="stats" data-stats aria-label="試行指標"></section>
 
@@ -78,6 +89,7 @@
             <label>學員<select name="studentId" data-student-select required></select></label>
             <label>課堂<select name="lessonType" data-lesson-type required></select></label>
             <label>地點<select name="locationId" data-location required></select></label>
+            <div class="location-notices" data-location-notices hidden></div>
             <label>
               上課時間
               <input type="datetime-local" name="scheduledStart" required />
@@ -97,6 +109,7 @@
             <label>學員<select name="studentId" data-student-select required></select></label>
             <label>課堂<select name="lessonType" data-lesson-type required></select></label>
             <label>地點<select name="locationId" data-location required></select></label>
+            <div class="location-notices" data-location-notices hidden></div>
             <label>
               最早可行時間
               <input type="datetime-local" name="preferredStart" required />
@@ -181,9 +194,10 @@
 
       <section class="panel" data-panel="brief">
         <div class="section-heading">
-          <h2>明日課堂與警示</h2>
+          <h2>明日課堂、警示同點查節奏</h2>
           <button type="button" data-draft-reminders>建立 24 小時提醒草稿</button>
         </div>
+        <div class="ops-alert-list brief-notices" data-brief-notices></div>
         <div class="grid-three" data-brief></div>
       </section>
 
@@ -352,6 +366,6 @@
       </article>
     </template>
 
-    <script type="module" src="/app.js?v=20260905-accounting"></script>
+    <script type="module" src="/app.js?v=20261101-ops-notices"></script>
   </body>
 </html>

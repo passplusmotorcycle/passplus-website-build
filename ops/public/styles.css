@@ -76,6 +76,80 @@ main { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
 .session-bar button { flex: 0 0 auto; }
 .notice { margin: 1rem 0; padding: 0.9rem; border-radius: 0.5rem; background: var(--green-light); }
 .notice.is-error { color: var(--danger); background: #fee4e2; }
+.ops-alerts {
+  margin: 1rem 0 1.25rem;
+  padding: 1.1rem 1.15rem;
+  color: var(--navy);
+  background: #fff8c5;
+  border: 1px solid #eac54f;
+  border-left: 6px solid #d4a72c;
+  border-radius: 0.7rem;
+}
+.ops-alerts[hidden] { display: none; }
+.ops-alerts-head, .ops-alert-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.ops-alerts-head h2, .ops-alert h3 { margin: 0.2rem 0 0; }
+.ops-alert-list { display: grid; gap: 0.75rem; margin-top: 0.85rem; }
+.ops-alert {
+  padding: 0.85rem 0.95rem;
+  background: var(--white);
+  border: 1px solid #ead38a;
+  border-radius: 0.55rem;
+}
+.ops-alert p { margin: 0.35rem 0 0; color: var(--navy); font-size: 0.92rem; line-height: 1.45; }
+.ops-alert .ops-alert-en { color: var(--muted); font-size: 0.82rem; }
+.ops-alert-locations {
+  margin: 0.35rem 0 0;
+  color: var(--warning);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.ops-alert-form { display: grid; gap: 0.55rem; margin-top: 0.75rem; }
+.ops-alert-form[hidden] { display: none; }
+.location-notices {
+  margin: -0.35rem 0 0.9rem;
+  padding: 0.7rem 0.8rem;
+  background: #fff8c5;
+  border-left: 4px solid #d4a72c;
+  border-radius: 0.4rem;
+}
+.location-notices[hidden] { display: none; }
+.location-notices p { margin: 0.3rem 0 0; color: var(--navy); font-size: 0.82rem; line-height: 1.4; }
+.location-notices p:first-child { margin-top: 0; }
+.lesson-route-alerts {
+  margin-top: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  background: #fff8c5;
+  border-left: 4px solid #d4a72c;
+  border-radius: 0.35rem;
+}
+.lesson-route-alerts p { margin: 0.3rem 0 0; color: var(--navy); font-size: 0.78rem; line-height: 1.4; }
+.lesson-route-alerts p:first-child { margin-top: 0; }
+.brief-notices { margin-bottom: 1rem; }
+.ops-alert.is-playbook { border-color: #86efac; background: #f0fdf4; }
+.ops-scope {
+  margin: 0.55rem 0 0;
+  padding: 0.5rem 0.6rem;
+  background: var(--white);
+  border-radius: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.ops-alert h4 { margin: 0.7rem 0 0.3rem; font-size: 0.82rem; letter-spacing: 0.04em; }
+.ops-playbook-list { margin: 0.25rem 0 0; padding-left: 1.15rem; color: var(--navy); font-size: 0.86rem; line-height: 1.45; }
+.ops-playbook-list a { color: var(--green); font-weight: 700; }
+.ops-playbook-example {
+  margin-top: 0.7rem;
+  padding: 0.65rem 0.75rem;
+  background: #fff8c5;
+  border-left: 4px solid #d4a72c;
+  border-radius: 0.4rem;
+}
+.ops-playbook-example a { color: var(--green); font-weight: 700; }
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1rem 0; }
 .compact-stats { grid-template-columns: repeat(3, 1fr); }
 .inline-filter {
@@ -306,7 +380,7 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
 .calendar-lesson.is-cancelled { opacity: 0.58; border-left-color: var(--danger); text-decoration: line-through; }
 
 @media (max-width: 760px) {
-  .topbar, .token-panel, .session-bar, .section-heading, .workflow-head { align-items: stretch; flex-direction: column; }
+  .topbar, .token-panel, .session-bar, .section-heading, .workflow-head, .ops-alerts-head, .ops-alert-head { align-items: stretch; flex-direction: column; }
   .stats, .compact-stats, .grid-two, .grid-three { grid-template-columns: 1fr; }
   .policy-badge { align-self: flex-start; }
   .today-date { align-self: flex-start; }

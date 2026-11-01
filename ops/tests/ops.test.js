@@ -17,7 +17,13 @@ import {
 import { buildAccountingReport, lessonAmountHkd } from '../lib/accounting.js';
 import { schedulingConflicts } from '../lib/scheduling.js';
 import { createOpsServer } from '../server.js';
-import { lessonTypes } from '../lib/domain.js';
+import {
+  lessonTypes,
+  mergeSeedOperationalNotices,
+  noticesForLocation,
+  operationalNotices,
+} from '../lib/domain.js';
+import { buildDailyBrief } from '../lib/scheduling.js';
 
 async function fixture() {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'passplus-ops-'));
@@ -386,6 +392,117 @@ test('accounting report splits realized booked cancelled and payments', async (t
   assert.equal(september.lines.length, 2);
 });
 
+test('seeded operational notices cover So Kon Po race-day, stadium closures, and check playbook', () => {
+  const soKonPo = noticesForLocation(operationalNotices, 'so_kon_po');
+  assert.equal(soKonPo.length, 3);
+  assert.equal(noticesForLocation(operationalNotices, 'tin_kwong_road').length, 0);
+
+  const raceDay = soKonPo.find((notice) => notice.id === 'so_kon_po_happy_valley_race_day');
+  const stadium = soKonPo.find((notice) => notice.id === 'so_kon_po_hk_stadium_closures');
+  const playbook = soKonPo.find((notice) => notice.id === 'so_kon_po_check_playbook');
+  assert.ok(raceDay);
+  assert.ok(stadium);
+  assert.ok(playbook);
+  assert.match(raceDay.titleZh, /禮頓道/);
+  assert.match(raceDay.titleZh, /黃泥涌道/);
+  assert.match(raceDay.bodyZh, /學牌/);
+  assert.match(raceDay.bodyEn, /learner/i);
+  assert.match(raceDay.bodyEn, /Leighton Road/);
+  assert.match(stadium.bodyZh, /連山道/);
+  assert.match(stadium.bodyZh, /大球場徑/);
+  assert.match(stadium.bodyZh, /童軍大會操/);
+  assert.match(stadium.bodyEn, /Lin Shan Road/);
+  assert.match(stadium.bodyEn, /Stadium Path/);
+  assert.match(stadium.bodyEn, /Scout Rally/);
+  assert.match(stadium.bodyZh, /普通改道/);
+  assert.match(playbook.titleZh, /點查／幾時查/);
+  assert.match(playbook.bodyZh, /普通改道/);
+  assert.deepEqual(playbook.scope.includeZh, ['阻考試／課堂路線嘅封路', '學牌（學牌車輛）禁行']);
+  assert.match(playbook.example.titleZh, /童軍大會操/);
+  assert.ok(playbook.sources.some((source) => /td\.gov\.hk/.test(source.url)));
+  assert.ok(playbook.cadence.some((item) => /每週一/.test(item.labelZh)));
+});
+
+test('existing ops.json is seeded with standing notices', async (t) => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'passplus-ops-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const filePath = path.join(directory, 'ops.json');
+  const store = await new JsonStore(filePath).init();
+  assert.equal(store.snapshot().operationalNotices.length, operationalNotices.length);
+
+  const legacy = store.snapshot();
+  delete legacy.operationalNotices;
+  store.data = legacy;
+  await store.persist();
+
+  const reopened = await new JsonStore(filePath).init();
+  const notices = reopened.snapshot().operationalNotices;
+  assert.equal(notices.length, operationalNotices.length);
+  assert.ok(notices.some((notice) => notice.id === 'so_kon_po_hk_stadium_closures'));
+});
+
+test('merge refreshes unedited previous seed titles for stadium notice', () => {
+  const data = {
+    operationalNotices: [
+      {
+        id: 'so_kon_po_hk_stadium_closures',
+        titleZh: '香港大球場活動：連山道／大球場徑或會封閉',
+        bodyZh: '舊文案',
+        locationIds: ['so_kon_po'],
+        active: true,
+      },
+    ],
+  };
+  assert.ok(mergeSeedOperationalNotices(data) >= 1);
+  const stadium = data.operationalNotices.find((notice) => notice.id === 'so_kon_po_hk_stadium_closures');
+  assert.match(stadium.titleZh, /封路＋學牌禁行/);
+  assert.match(stadium.bodyZh, /童軍大會操/);
+});
+
+test('merge keeps staff-edited standing notices', () => {
+  const data = {
+    operationalNotices: [
+      {
+        id: 'so_kon_po_happy_valley_race_day',
+        bodyZh: '自訂賽馬日提示',
+        locationIds: ['so_kon_po'],
+        active: true,
+      },
+    ],
+  };
+  const changed = mergeSeedOperationalNotices(data);
+  assert.ok(changed >= 2);
+  assert.equal(
+    data.operationalNotices.find((notice) => notice.id === 'so_kon_po_happy_valley_race_day').bodyZh,
+    '自訂賽馬日提示'
+  );
+  assert.ok(data.operationalNotices.some((notice) => notice.id === 'so_kon_po_hk_stadium_closures'));
+  assert.ok(data.operationalNotices.some((notice) => notice.id === 'so_kon_po_check_playbook'));
+});
+
+test('daily brief always includes standing So Kon Po notices', async (t) => {
+  const { directory, store } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const data = store.snapshot();
+  const emptyDay = buildDailyBrief(data, new Date('2030-01-02T00:00:00.000Z'));
+  assert.equal(emptyDay.lessons.length, 0);
+  assert.ok(emptyDay.operationalNotices.some((notice) => /禮頓道/.test(notice.titleZh)));
+  assert.ok(emptyDay.operationalNotices.some((notice) => /連山道/.test(notice.bodyZh)));
+  assert.ok(emptyDay.checkPlaybook?.cadence?.some((item) => /每週一/.test(item.labelZh)));
+  assert.equal(emptyDay.locationNotices.length, 0);
+
+  data.lessons.push({
+    id: 'lesson-skp',
+    studentId: 'student-1',
+    locationId: 'so_kon_po',
+    lessonType: 'instructor',
+    scheduledStart: '2030-01-02T04:00:00.000Z',
+    status: 'confirmed',
+  });
+  const withLesson = buildDailyBrief(data, new Date('2030-01-02T00:00:00.000Z'));
+  assert.ok(withLesson.locationNotices.some((notice) => notice.locationIds.includes('so_kon_po')));
+});
+
 test('API requires bearer token when configured', async (t) => {
   const { directory, store } = await fixture();
   const server = await createOpsServer({ store, adminToken: 'test-secret' });
@@ -407,4 +524,25 @@ test('API requires bearer token when configured', async (t) => {
   const payload = await authorized.json();
   assert.equal(payload.policy.automaticSending, false);
   assert.equal(payload.policy.approvalRequired, true);
+  assert.ok(payload.operationalNotices.some((notice) => notice.id === 'so_kon_po_happy_valley_race_day'));
+  assert.ok(payload.dailyBrief.operationalNotices.some((notice) => /學牌/.test(notice.bodyZh)));
+
+  const updated = await fetch(`${base}/api/operational-notices/so_kon_po_happy_valley_race_day`, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer test-secret',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ bodyZh: '已人手更新嘅賽馬日提示' }),
+  });
+  assert.equal(updated.status, 200);
+  const refreshed = await fetch(`${base}/api/bootstrap`, {
+    headers: { Authorization: 'Bearer test-secret' },
+  });
+  const refreshedPayload = await refreshed.json();
+  assert.equal(
+    refreshedPayload.operationalNotices.find((notice) => notice.id === 'so_kon_po_happy_valley_race_day')
+      .bodyZh,
+    '已人手更新嘅賽馬日提示'
+  );
 });

@@ -158,6 +158,58 @@ function lessonNotes(lesson) {
   return String(lesson?.customerNotes ?? lesson?.notes ?? '').trim();
 }
 
+function activeNotices() {
+  return (state.data?.operationalNotices ?? []).filter((notice) => notice.active !== false);
+}
+
+function noticesForLocation(locationId) {
+  if (!locationId) return [];
+  return activeNotices().filter(
+    (notice) => !notice.locationIds?.length || notice.locationIds.includes(locationId)
+  );
+}
+
+function noticeLocationLabels(notice) {
+  return (notice.locationIds ?? [])
+    .map((id) => state.data?.locations?.find((location) => location.id === id)?.labelZh ?? id)
+    .join('、');
+}
+
+function safeHttpUrl(value) {
+  try {
+    const url = new URL(String(value ?? ''));
+    if (url.protocol === 'https:' || url.protocol === 'http:') return url.href;
+  } catch {
+    return '';
+  }
+  return '';
+}
+
+function externalLink(url, label) {
+  const href = safeHttpUrl(url);
+  if (!href) return text(label);
+  return `<a href="${text(href)}" target="_blank" rel="noopener noreferrer">${text(label)}</a>`;
+}
+
+function isPlaybook(notice) {
+  return notice?.kind === 'playbook';
+}
+
+function locationNoticeMarkup(locationId, options = {}) {
+  const notices = noticesForLocation(locationId);
+  if (!notices.length) return '';
+  const compact = options.compact;
+  return `<aside class="${compact ? 'lesson-route-alerts' : 'location-notices'}" aria-label="地點注意事項">
+    ${notices
+      .map((notice) =>
+        compact
+          ? `<p><strong>${text(notice.titleZh)}</strong></p>`
+          : `<p><strong>${text(notice.titleZh)}</strong> ${text(notice.bodyZh)}</p>`
+      )
+      .join('')}
+  </aside>`;
+}
+
 function canModifyLesson(lesson) {
   return !['completed', 'cancelled', 'no_show', 'pending_approval'].includes(lesson.status);
 }
@@ -199,6 +251,7 @@ function calendarLessonCard(lesson) {
     <div>
       <strong>${text(student?.name ?? '未命名學員')} · ${text(type?.labelZh ?? lesson.lessonType)}</strong>
       <p>${text(location?.labelZh ?? '')} · ${text(lesson.status)}</p>
+      ${locationNoticeMarkup(lesson.locationId, { compact: true })}
       <div class="lesson-notes-block">
         ${notes ? `<p class="lesson-notes">${text(notes)}</p>` : `<p class="lesson-notes is-empty">未有備註</p>`}
         <button type="button" class="secondary notes-edit" data-edit-notes>編輯備註</button>
@@ -324,6 +377,152 @@ function renderSelects() {
   $$('[data-location]').forEach((select) => {
     select.innerHTML = locationOptions;
   });
+  renderLocationNoticeHints();
+}
+
+function renderLocationNoticeHints() {
+  $$('[data-location]').forEach((select) => {
+    const form = select.closest('form') ?? select.parentElement;
+    const hint =
+      select.parentElement?.querySelector('[data-location-notices]') ??
+      form?.querySelector('[data-location-notices]');
+    if (!hint) return;
+    const notices = noticesForLocation(select.value);
+    hint.innerHTML = notices
+      .map((notice) =>
+        isPlaybook(notice)
+          ? `<p><strong>${text(notice.titleZh)}</strong> ${text(notice.cadence?.[0]?.labelZh ?? notice.bodyZh)}</p>`
+          : `<p><strong>${text(notice.titleZh)}</strong> ${text(notice.bodyZh)}</p>`
+      )
+      .join('');
+    hint.hidden = !notices.length;
+    if (!select.dataset.noticeBound) {
+      select.dataset.noticeBound = 'true';
+      select.addEventListener('change', renderLocationNoticeHints);
+    }
+  });
+}
+
+function renderOpsAlerts() {
+  const root = $('[data-ops-alerts]');
+  const list = $('[data-ops-alert-list]');
+  if (!root || !list) return;
+  const notices = activeNotices();
+  root.hidden = !notices.length;
+  list.innerHTML = notices.map(operationalNoticeCard).join('');
+  bindNoticeEditors(list);
+}
+
+function checkLinesMarkup(notice) {
+  const parts = [];
+  if (notice.checkHowZh) {
+    parts.push(`<p><strong>點查：</strong>${text(notice.checkHowZh)}</p>`);
+    if (notice.checkHowEn) parts.push(`<p class="ops-alert-en">${text(notice.checkHowEn)}</p>`);
+  }
+  if (notice.checkWhenZh) {
+    parts.push(`<p><strong>幾時查：</strong>${text(notice.checkWhenZh)}</p>`);
+    if (notice.checkWhenEn) parts.push(`<p class="ops-alert-en">${text(notice.checkWhenEn)}</p>`);
+  }
+  return parts.join('');
+}
+
+function playbookDetailsMarkup(notice) {
+  if (!isPlaybook(notice)) return checkLinesMarkup(notice);
+  const scope = notice.scope
+    ? `<p class="ops-scope"><strong>只提醒：</strong>${text((notice.scope.includeZh ?? []).join('；'))}。<strong>唔提醒：</strong>${text(
+        (notice.scope.excludeZh ?? []).join('；')
+      )}</p>`
+    : '';
+  const sources = (notice.sources ?? [])
+    .map((source) => `<li>${externalLink(source.url, source.labelZh)}</li>`)
+    .join('');
+  const cadence = (notice.cadence ?? [])
+    .map((item) => `<li>${text(item.labelZh)}</li>`)
+    .join('');
+  const example = notice.example
+    ? `<div class="ops-playbook-example">
+        <p><strong>${text(notice.example.titleZh)}</strong></p>
+        <p>${text(notice.example.bodyZh)}</p>
+        <p class="ops-alert-en">${text(notice.example.titleEn)}</p>
+        <p class="ops-alert-en">${text(notice.example.bodyEn)}</p>
+        <p>${(notice.example.links ?? [])
+          .map((link) => externalLink(link.url, link.labelZh))
+          .join(' · ')}</p>
+      </div>`
+    : '';
+  return `${scope}
+    ${checkLinesMarkup(notice)}
+    ${sources ? `<h4>點查</h4><ul class="ops-playbook-list">${sources}</ul>` : ''}
+    ${cadence ? `<h4>幾時查</h4><ul class="ops-playbook-list">${cadence}</ul>` : ''}
+    ${example}`;
+}
+
+function operationalNoticeCard(notice) {
+  const locations = noticeLocationLabels(notice);
+  return `<article class="ops-alert ${isPlaybook(notice) ? 'is-playbook' : ''}" data-notice-card="${text(notice.id)}">
+    <div class="ops-alert-head">
+      <div>
+        <h3>${text(notice.titleZh)}</h3>
+        <p class="ops-alert-locations">${text(locations || '全線適用')}</p>
+      </div>
+      <button type="button" class="secondary" data-edit-notice>編輯</button>
+    </div>
+    <p>${text(notice.bodyZh)}</p>
+    <p class="ops-alert-en">${text(notice.titleEn)}</p>
+    <p class="ops-alert-en">${text(notice.bodyEn)}</p>
+    ${playbookDetailsMarkup(notice)}
+    <form class="ops-alert-form" data-notice-form hidden>
+      <label>標題（中）<input name="titleZh" value="${text(notice.titleZh)}" required /></label>
+      <label>標題（英）<input name="titleEn" value="${text(notice.titleEn)}" /></label>
+      <label>內容（中）<textarea name="bodyZh" rows="3" required>${text(notice.bodyZh)}</textarea></label>
+      <label>內容（英）<textarea name="bodyEn" rows="3">${text(notice.bodyEn)}</textarea></label>
+      <label>點查（中）<textarea name="checkHowZh" rows="2">${text(notice.checkHowZh ?? '')}</textarea></label>
+      <label>點查（英）<textarea name="checkHowEn" rows="2">${text(notice.checkHowEn ?? '')}</textarea></label>
+      <label>幾時查（中）<textarea name="checkWhenZh" rows="2">${text(notice.checkWhenZh ?? '')}</textarea></label>
+      <label>幾時查（英）<textarea name="checkWhenEn" rows="2">${text(notice.checkWhenEn ?? '')}</textarea></label>
+      <div class="actions">
+        <button type="submit">儲存注意事項</button>
+        <button type="button" class="secondary" data-cancel-notice>返回</button>
+      </div>
+    </form>
+  </article>`;
+}
+
+async function saveOperationalNotice(noticeId, input) {
+  await api(`/api/operational-notices/${noticeId}`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  notice('注意事項已更新。');
+  await load();
+}
+
+function bindNoticeEditors(root = document) {
+  $$('[data-notice-card]', root).forEach((card) => {
+    const noticeId = card.dataset.noticeCard;
+    const editButton = $('[data-edit-notice]', card);
+    const form = $('[data-notice-form]', card);
+    const cancelButton = $('[data-cancel-notice]', card);
+    if (!editButton || !form) return;
+    editButton.addEventListener('click', () => {
+      form.hidden = false;
+      editButton.hidden = true;
+      form.elements.titleZh.focus();
+    });
+    cancelButton?.addEventListener('click', () => {
+      form.hidden = true;
+      editButton.hidden = false;
+    });
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const input = Object.fromEntries(new FormData(form));
+      try {
+        await saveOperationalNotice(noticeId, input);
+      } catch (error) {
+        notice(error.message, true);
+      }
+    });
+  });
 }
 
 function renderStudents() {
@@ -353,6 +552,7 @@ function renderStudents() {
             <h3>${text(student?.name)} · ${text(type?.labelZh)}</h3>
             <p>${formatDate(lesson.scheduledStart)}</p>
             <p><strong>地點：${text(location?.labelZh || '未設定')}</strong></p>
+            ${locationNoticeMarkup(lesson.locationId, { compact: true })}
             <div class="lesson-notes-block">
               ${notes ? `<p class="lesson-notes">${text(notes)}</p>` : `<p class="lesson-notes is-empty">未有備註</p>`}
               <button type="button" class="secondary notes-edit" data-edit-notes>編輯備註</button>
@@ -594,6 +794,10 @@ function createWorkflowCard(workflow, isPending) {
     locationLine.textContent = location
       ? `地點：${location.labelZh}`
       : '地點：未有課堂地點資料';
+    const existing = locationLine.nextElementSibling;
+    if (existing?.classList.contains('lesson-route-alerts')) existing.remove();
+    const markup = locationNoticeMarkup(lesson?.locationId, { compact: true });
+    if (markup) locationLine.insertAdjacentHTML('afterend', markup);
   }
   const select = $('[data-slot]', card);
   select.innerHTML = (workflow.proposedSlots || [])
@@ -783,11 +987,38 @@ function renderAccounting() {
 
 function renderBrief() {
   const brief = state.data.dailyBrief;
+  const standing = brief.operationalNotices ?? activeNotices();
+  const locationHits = brief.locationNotices ?? [];
+  const briefNotices = $('[data-brief-notices]');
+  if (briefNotices) {
+    briefNotices.innerHTML = standing.length
+      ? standing
+          .map((item) => {
+            const tomorrowHit = locationHits.some((notice) => notice.id === item.id);
+            return `<article class="ops-alert ${isPlaybook(item) ? 'is-playbook' : ''}">
+              <h3>${text(item.titleZh)}</h3>
+              <p class="ops-alert-locations">${text(noticeLocationLabels(item) || '全線適用')}${
+                tomorrowHit ? ' · 明日掃桿埔課堂適用' : ''
+              }</p>
+              <p>${text(item.bodyZh)}</p>
+              <p class="ops-alert-en">${text(item.bodyEn)}</p>
+              ${playbookDetailsMarkup(item)}
+            </article>`;
+          })
+          .join('')
+      : '<div class="empty">未有常設注意事項</div>';
+  }
   const blocks = [
     [
       `課堂 · ${brief.date}`,
       brief.lessons.length
-        ? brief.lessons.map((lesson) => `<p>${formatDate(lesson.scheduledStart)}</p>`).join('')
+        ? brief.lessons
+            .map((lesson) => {
+              const location = state.data.locations.find((item) => item.id === lesson.locationId);
+              return `<p>${formatDate(lesson.scheduledStart)} · ${text(location?.labelZh ?? '')}</p>
+                ${locationNoticeMarkup(lesson.locationId, { compact: true })}`;
+            })
+            .join('')
         : '<p>未有課堂</p>',
     ],
     ['考試倒數（14 日）', `<strong>${brief.examAlerts.length}</strong><p>需要跟進</p>`],
@@ -822,6 +1053,7 @@ async function load() {
   state.data = await api('/api/bootstrap');
   renderSession();
   renderStats();
+  renderOpsAlerts();
   renderSelects();
   renderStudents();
   renderWorkflows();
@@ -872,6 +1104,9 @@ $('[data-logout]').addEventListener('click', () => {
   $('[data-token]').value = '';
   renderSession();
   $('[data-stats]').replaceChildren();
+  $('[data-ops-alerts]').hidden = true;
+  $('[data-ops-alert-list]').replaceChildren();
+  $('[data-brief-notices]')?.replaceChildren();
   $('[data-students]').innerHTML = '';
   $('[data-lessons]').innerHTML = '';
   $('[data-workflows]').replaceChildren();
