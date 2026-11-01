@@ -278,6 +278,19 @@ export function noticesForLocation(notices, locationId) {
   );
 }
 
+export function noticesForLessons(notices, lessons) {
+  const locationIds = [
+    ...new Set((lessons ?? []).map((lesson) => lesson.locationId).filter(Boolean)),
+  ];
+  const seen = new Map();
+  for (const locationId of locationIds) {
+    for (const notice of noticesForLocation(notices, locationId)) {
+      seen.set(notice.id, notice);
+    }
+  }
+  return [...seen.values()];
+}
+
 export function mergeSeedOperationalNotices(data, now = new Date().toISOString()) {
   if (!Array.isArray(data.operationalNotices)) data.operationalNotices = [];
   const existingById = new Map(data.operationalNotices.map((notice) => [notice.id, notice]));

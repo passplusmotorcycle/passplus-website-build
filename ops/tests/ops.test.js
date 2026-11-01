@@ -20,6 +20,7 @@ import { createOpsServer } from '../server.js';
 import {
   lessonTypes,
   mergeSeedOperationalNotices,
+  noticesForLessons,
   noticesForLocation,
   operationalNotices,
 } from '../lib/domain.js';
@@ -421,6 +422,21 @@ test('seeded operational notices cover So Kon Po race-day, stadium closures, and
   assert.match(playbook.example.titleZh, /童軍大會操/);
   assert.ok(playbook.sources.some((source) => /td\.gov\.hk/.test(source.url)));
   assert.ok(playbook.cadence.some((item) => /每週一/.test(item.labelZh)));
+});
+
+test('calendar days with So Kon Po lessons expose standing notices, Tin Kwong does not', () => {
+  const soKonPoDay = noticesForLessons(operationalNotices, [
+    { locationId: 'so_kon_po', lessonType: 'instructor' },
+  ]);
+  const tinKwongDay = noticesForLessons(operationalNotices, [
+    { locationId: 'tin_kwong_road', lessonType: 'instructor' },
+  ]);
+  assert.equal(soKonPoDay.length, 3);
+  assert.ok(soKonPoDay.some((notice) => notice.id === 'so_kon_po_happy_valley_race_day'));
+  assert.ok(soKonPoDay.some((notice) => notice.id === 'so_kon_po_hk_stadium_closures'));
+  assert.ok(soKonPoDay.some((notice) => notice.id === 'so_kon_po_check_playbook'));
+  assert.equal(tinKwongDay.length, 0);
+  assert.equal(noticesForLessons(operationalNotices, []).length, 0);
 });
 
 test('existing ops.json is seeded with standing notices', async (t) => {

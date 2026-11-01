@@ -15,9 +15,10 @@ be shipped as static browser assets.
 - Explicit escalation for refunds, licensing/legal answers, safety, complaints, special prices, and
   final cancellations.
 - 14-day pilot metrics and a next-day operations brief.
-- Standing bilingual So Kon Po notices (seeded into `ops.json`, shown on the dashboard) for race-day
-  learner bans, Stadium closures + learner bans, and a 「點查／幾時查」 playbook. Ordinary diversions
-  are out of scope.
+- Standing bilingual So Kon Po notices (seeded into `ops.json`, shown on the dashboard and class
+  calendar) for race-day learner bans, Stadium closures + learner bans, and a 「點查／幾時查」
+  playbook. Ordinary diversions are out of scope. Calendar days with So Kon Po lessons show a
+  route-notice flag and the notices when that day is opened.
 - Permission foundations for sales, student-success, finance, and compliance agents.
 - No automatic WhatsApp sending, payment commitment, refund, legal answer, or cancellation.
 

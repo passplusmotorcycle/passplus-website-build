@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>PassPlus 營運控制台</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=20261101-ops-notices" />
+    <link rel="stylesheet" href="/styles.css?v=20261101-ops-calendar-notices" />
   </head>
   <body>
     <header class="topbar">
@@ -128,6 +128,7 @@
       </section>
 
       <section class="panel" data-panel="calendar">
+        <aside class="calendar-standing-notices" data-calendar-standing-notices hidden></aside>
         <div class="today-section">
           <div class="section-heading">
             <div>
@@ -136,6 +137,7 @@
             </div>
             <strong class="today-date" data-today-date></strong>
           </div>
+          <div data-today-day-notices hidden></div>
           <div class="today-list" data-today-lessons></div>
         </div>
 
@@ -163,6 +165,7 @@
             <h2 data-selected-date></h2>
             <span class="status" data-selected-count></span>
           </div>
+          <div data-selected-day-notices hidden></div>
           <div class="stack" data-selected-lessons aria-live="polite"></div>
         </div>
       </section>
@@ -366,6 +369,6 @@
       </article>
     </template>
 
-    <script type="module" src="/app.js?v=20261101-ops-notices"></script>
+    <script type="module" src="/app.js?v=20261101-ops-calendar-notices"></script>
   </body>
 </html>

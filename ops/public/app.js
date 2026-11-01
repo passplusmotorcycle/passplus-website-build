@@ -195,6 +195,17 @@ function isPlaybook(notice) {
   return notice?.kind === 'playbook';
 }
 
+function noticesForLessons(lessons) {
+  const locationIds = [...new Set((lessons ?? []).map((lesson) => lesson.locationId).filter(Boolean))];
+  const seen = new Map();
+  for (const locationId of locationIds) {
+    for (const notice of noticesForLocation(locationId)) {
+      seen.set(notice.id, notice);
+    }
+  }
+  return [...seen.values()];
+}
+
 function locationNoticeMarkup(locationId, options = {}) {
   const notices = noticesForLocation(locationId);
   if (!notices.length) return '';
@@ -208,6 +219,41 @@ function locationNoticeMarkup(locationId, options = {}) {
       )
       .join('')}
   </aside>`;
+}
+
+function calendarNoticesPanel(notices, options = {}) {
+  if (!notices.length) return '';
+  const restrictions = notices.filter((notice) => !isPlaybook(notice));
+  const playbook = notices.find(isPlaybook);
+  const scope = playbook?.scope
+    ? `只提醒：${text((playbook.scope.includeZh ?? []).join('；'))}。唔提醒：${text(
+        (playbook.scope.excludeZh ?? []).join('；')
+      )}`
+    : '只提醒封路阻路線／學牌禁行。普通改道唔入。';
+  const items = [
+    ...restrictions.map((notice) => {
+      const extra = notice.checkWhenZh ? ` — ${text(notice.checkWhenZh)}` : '';
+      return `<li><strong>${text(notice.titleZh)}</strong>${extra}</li>`;
+    }),
+    playbook
+      ? `<li><strong>${text(playbook.titleZh)}</strong> — ${text(
+          playbook.cadence?.[0]?.labelZh ?? playbook.bodyZh
+        )}</li>`
+      : '',
+  ].filter(Boolean);
+  return `<aside class="calendar-day-notices ${options.tone === 'dark' ? 'is-on-navy' : ''}" aria-label="掃桿埔注意事項">
+    <p class="calendar-day-notices-kicker">掃桿埔課堂日曆注意</p>
+    <p class="calendar-day-notices-scope">${scope}</p>
+    <ul>${items.join('')}</ul>
+  </aside>`;
+}
+
+function renderDayNoticeSlot(selector, lessons, options = {}) {
+  const slot = $(selector);
+  if (!slot) return;
+  const notices = noticesForLessons(lessons);
+  slot.innerHTML = calendarNoticesPanel(notices, options);
+  slot.hidden = !notices.length;
 }
 
 function canModifyLesson(lesson) {
@@ -289,6 +335,8 @@ function renderCalendar() {
   for (let day = 1; day <= daysInMonth; day += 1) {
     const key = keyForDay(year, month, day);
     const lessons = lessonsForDate(key);
+    const dayNotices = noticesForLessons(lessons);
+    const hasRouteNotices = dayNotices.length > 0;
     const preview = lessons
       .slice(0, 2)
       .map((lesson) => {
@@ -301,12 +349,17 @@ function renderCalendar() {
       .join('');
     cells.push(`<button
       type="button"
-      class="calendar-day ${key === today ? 'is-today' : ''} ${key === state.selectedDate ? 'is-selected' : ''}"
+      class="calendar-day ${key === today ? 'is-today' : ''} ${key === state.selectedDate ? 'is-selected' : ''} ${
+        hasRouteNotices ? 'has-route-notices' : ''
+      }"
       data-calendar-date="${key}"
-      aria-label="${formatCalendarDate(key)}，${lessons.length}堂課"
+      aria-label="${formatCalendarDate(key)}，${lessons.length}堂課${
+        hasRouteNotices ? '，掃桿埔注意：封路／學牌禁行' : ''
+      }"
     >
       <span class="calendar-day-number">${day}</span>
       <span class="calendar-event-count">${lessons.length ? `${lessons.length}堂` : ''}</span>
+      ${hasRouteNotices ? '<span class="calendar-route-flag">掃桿埔注意</span>' : ''}
       <span class="calendar-events">${preview}</span>
     </button>`);
   }
@@ -319,8 +372,16 @@ function renderCalendar() {
     });
   });
 
+  const standingRoot = $('[data-calendar-standing-notices]');
+  if (standingRoot) {
+    const standing = noticesForLocation('so_kon_po');
+    standingRoot.innerHTML = calendarNoticesPanel(standing);
+    standingRoot.hidden = !standing.length;
+  }
+
   const todayLessons = lessonsForDate(today);
   $('[data-today-date]').textContent = formatCalendarDate(today);
+  renderDayNoticeSlot('[data-today-day-notices]', todayLessons, { tone: 'dark' });
   $('[data-today-lessons]').innerHTML = todayLessons.length
     ? todayLessons.map(calendarLessonCard).join('')
     : '<div class="empty">今日未有課堂</div>';
@@ -328,6 +389,7 @@ function renderCalendar() {
   const selectedLessons = lessonsForDate(state.selectedDate);
   $('[data-selected-date]').textContent = formatCalendarDate(state.selectedDate);
   $('[data-selected-count]').textContent = `${selectedLessons.length} 堂`;
+  renderDayNoticeSlot('[data-selected-day-notices]', selectedLessons);
   $('[data-selected-lessons]').innerHTML = selectedLessons.length
     ? selectedLessons.map(calendarLessonCard).join('')
     : '<div class="empty">當日未有課堂</div>';
@@ -1112,6 +1174,12 @@ $('[data-logout]').addEventListener('click', () => {
   $('[data-workflows]').replaceChildren();
   $('[data-today-lessons]').innerHTML = '';
   $('[data-selected-lessons]').innerHTML = '';
+  $('[data-calendar-standing-notices]').hidden = true;
+  $('[data-calendar-standing-notices]').replaceChildren();
+  $('[data-today-day-notices]').hidden = true;
+  $('[data-today-day-notices]').replaceChildren();
+  $('[data-selected-day-notices]').hidden = true;
+  $('[data-selected-day-notices]').replaceChildren();
   notice('已登出。下次要再輸入 Token。');
 });
 
