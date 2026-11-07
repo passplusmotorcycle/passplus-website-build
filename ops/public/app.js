@@ -206,18 +206,59 @@ function noticesForLessons(lessons) {
   return [...seen.values()];
 }
 
+function activeDatedAlerts() {
+  return (state.data?.datedRouteAlerts ?? []).filter((alert) => alert.active !== false);
+}
+
+function datedAlertsForDate(dateKey) {
+  return activeDatedAlerts()
+    .filter((alert) => alert.date === dateKey)
+    .sort((a, b) => String(a.kind).localeCompare(String(b.kind)) || String(a.id).localeCompare(String(b.id)));
+}
+
+function datedAlertsForLocationDate(locationId, dateKey) {
+  return datedAlertsForDate(dateKey).filter(
+    (alert) => !alert.locationIds?.length || alert.locationIds.includes(locationId)
+  );
+}
+
+function datedAlertFlagLabel(alert) {
+  return alert.shortLabelZh || (alert.kind === 'stadium_closure' ? '大球場封路' : '賽馬日學牌');
+}
+
+function datedAlertKindLabel(kind) {
+  return kind === 'stadium_closure' ? '大球場封路／學牌' : '跑馬地賽馬日學牌';
+}
+
+function datedAlertSessionLabel(session) {
+  if (session === 'night') return '夜';
+  if (session === 'day') return '日';
+  return '全日';
+}
+
 function locationNoticeMarkup(locationId, options = {}) {
   const notices = noticesForLocation(locationId);
-  if (!notices.length) return '';
+  const dated = options.dateKey ? datedAlertsForLocationDate(locationId, options.dateKey) : [];
+  if (!notices.length && !dated.length) return '';
   const compact = options.compact;
-  return `<aside class="${compact ? 'lesson-route-alerts' : 'location-notices'}" aria-label="地點注意事項">
-    ${notices
-      .map((notice) =>
-        compact
-          ? `<p><strong>${text(notice.titleZh)}</strong></p>`
+  const inner = `${dated
+    .map((alert) =>
+      compact
+        ? `<p class="is-dated"><strong>${text(datedAlertFlagLabel(alert))}</strong> ${text(alert.titleZh)}</p>`
+        : `<p class="is-dated"><strong>${text(alert.titleZh)}</strong> ${text(alert.bodyZh)}</p>`
+    )
+    .join('')}${notices
+    .map((notice) =>
+      compact
+        ? `<p><strong>${text(notice.titleZh)}</strong></p>`
+        : isPlaybook(notice)
+          ? `<p><strong>${text(notice.titleZh)}</strong> ${text(notice.cadence?.[0]?.labelZh ?? notice.bodyZh)}</p>`
           : `<p><strong>${text(notice.titleZh)}</strong> ${text(notice.bodyZh)}</p>`
-      )
-      .join('')}
+    )
+    .join('')}`;
+  if (options.wrap === false) return inner;
+  return `<aside class="${compact ? 'lesson-route-alerts' : 'location-notices'}" aria-label="地點注意事項">
+    ${inner}
   </aside>`;
 }
 
@@ -248,12 +289,30 @@ function calendarNoticesPanel(notices, options = {}) {
   </aside>`;
 }
 
-function renderDayNoticeSlot(selector, lessons, options = {}) {
+function datedAlertsPanel(alerts, options = {}) {
+  if (!alerts.length) return '';
+  const items = alerts
+    .map((alert) => {
+      const source = alert.sourceUrl
+        ? ` ${externalLink(alert.sourceUrl, alert.sourceLabelZh || '運輸署通告')}`
+        : '';
+      return `<li><strong>${text(alert.titleZh)}</strong> — ${text(alert.bodyZh)}${source}</li>`;
+    })
+    .join('');
+  return `<aside class="calendar-day-notices is-dated ${options.tone === 'dark' ? 'is-on-navy' : ''}" aria-label="當日賽馬日或封路">
+    <p class="calendar-day-notices-kicker">當日有日期提醒</p>
+    <p class="calendar-day-notices-scope">只跟學牌禁行，同有 TD 通告嘅大球場封路／學牌。普通改道同火警演習唔入。</p>
+    <ul>${items}</ul>
+  </aside>`;
+}
+
+function renderDayNoticeSlot(selector, dateKey, lessons, options = {}) {
   const slot = $(selector);
   if (!slot) return;
+  const dated = datedAlertsForDate(dateKey);
   const notices = noticesForLessons(lessons);
-  slot.innerHTML = calendarNoticesPanel(notices, options);
-  slot.hidden = !notices.length;
+  slot.innerHTML = `${datedAlertsPanel(dated, options)}${calendarNoticesPanel(notices, options)}`;
+  slot.hidden = !dated.length && !notices.length;
 }
 
 function canModifyLesson(lesson) {
@@ -297,7 +356,7 @@ function calendarLessonCard(lesson) {
     <div>
       <strong>${text(student?.name ?? '未命名學員')} · ${text(type?.labelZh ?? lesson.lessonType)}</strong>
       <p>${text(location?.labelZh ?? '')} · ${text(lesson.status)}</p>
-      ${locationNoticeMarkup(lesson.locationId, { compact: true })}
+      ${locationNoticeMarkup(lesson.locationId, { compact: true, dateKey: dateKey(lesson.scheduledStart) })}
       <div class="lesson-notes-block">
         ${notes ? `<p class="lesson-notes">${text(notes)}</p>` : `<p class="lesson-notes is-empty">未有備註</p>`}
         <button type="button" class="secondary notes-edit" data-edit-notes>編輯備註</button>
@@ -336,7 +395,21 @@ function renderCalendar() {
     const key = keyForDay(year, month, day);
     const lessons = lessonsForDate(key);
     const dayNotices = noticesForLessons(lessons);
+    const dayDated = datedAlertsForDate(key);
     const hasRouteNotices = dayNotices.length > 0;
+    const hasRace = dayDated.some((alert) => alert.kind === 'race_day');
+    const hasStadium = dayDated.some((alert) => alert.kind === 'stadium_closure');
+    const hasDated = dayDated.length > 0;
+    const flags = [
+      hasRace ? `<span class="calendar-flag is-race">${text(dayDated.find((alert) => alert.kind === 'race_day').shortLabelZh || '賽馬日學牌')}</span>` : '',
+      hasStadium ? `<span class="calendar-flag is-stadium">${text(dayDated.find((alert) => alert.kind === 'stadium_closure').shortLabelZh || '大球場封路')}</span>` : '',
+      hasRouteNotices && !hasDated ? '<span class="calendar-route-flag">掃桿埔注意</span>' : '',
+    ].filter(Boolean).join('');
+    const extraLabel = [
+      hasRace ? '跑馬地賽馬日學牌禁行' : '',
+      hasStadium ? '大球場封路或學牌' : '',
+      hasRouteNotices && !hasDated ? '掃桿埔注意：封路／學牌禁行' : '',
+    ].filter(Boolean).join('，');
     const preview = lessons
       .slice(0, 2)
       .map((lesson) => {
@@ -350,16 +423,14 @@ function renderCalendar() {
     cells.push(`<button
       type="button"
       class="calendar-day ${key === today ? 'is-today' : ''} ${key === state.selectedDate ? 'is-selected' : ''} ${
-        hasRouteNotices ? 'has-route-notices' : ''
-      }"
+        hasDated ? 'has-dated-alerts' : hasRouteNotices ? 'has-route-notices' : ''
+      } ${hasRace ? 'is-race-day' : ''} ${hasStadium ? 'is-stadium-day' : ''}"
       data-calendar-date="${key}"
-      aria-label="${formatCalendarDate(key)}，${lessons.length}堂課${
-        hasRouteNotices ? '，掃桿埔注意：封路／學牌禁行' : ''
-      }"
+      aria-label="${formatCalendarDate(key)}，${lessons.length}堂課${extraLabel ? `，${extraLabel}` : ''}"
     >
       <span class="calendar-day-number">${day}</span>
       <span class="calendar-event-count">${lessons.length ? `${lessons.length}堂` : ''}</span>
-      ${hasRouteNotices ? '<span class="calendar-route-flag">掃桿埔注意</span>' : ''}
+      ${flags ? `<span class="calendar-alert-flags">${flags}</span>` : ''}
       <span class="calendar-events">${preview}</span>
     </button>`);
   }
@@ -381,7 +452,7 @@ function renderCalendar() {
 
   const todayLessons = lessonsForDate(today);
   $('[data-today-date]').textContent = formatCalendarDate(today);
-  renderDayNoticeSlot('[data-today-day-notices]', todayLessons, { tone: 'dark' });
+  renderDayNoticeSlot('[data-today-day-notices]', today, todayLessons, { tone: 'dark' });
   $('[data-today-lessons]').innerHTML = todayLessons.length
     ? todayLessons.map(calendarLessonCard).join('')
     : '<div class="empty">今日未有課堂</div>';
@@ -389,7 +460,7 @@ function renderCalendar() {
   const selectedLessons = lessonsForDate(state.selectedDate);
   $('[data-selected-date]').textContent = formatCalendarDate(state.selectedDate);
   $('[data-selected-count]').textContent = `${selectedLessons.length} 堂`;
-  renderDayNoticeSlot('[data-selected-day-notices]', selectedLessons);
+  renderDayNoticeSlot('[data-selected-day-notices]', state.selectedDate, selectedLessons);
   $('[data-selected-lessons]').innerHTML = selectedLessons.length
     ? selectedLessons.map(calendarLessonCard).join('')
     : '<div class="empty">當日未有課堂</div>';
@@ -442,6 +513,15 @@ function renderSelects() {
   renderLocationNoticeHints();
 }
 
+function formScheduleDateKey(form) {
+  const input = form?.querySelector('input[name="scheduledStart"], input[name="preferredStart"]');
+  const value = input?.value;
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (!Number.isFinite(parsed.getTime())) return String(value).slice(0, 10);
+  return dateKey(parsed);
+}
+
 function renderLocationNoticeHints() {
   $$('[data-location]').forEach((select) => {
     const form = select.closest('form') ?? select.parentElement;
@@ -449,18 +529,15 @@ function renderLocationNoticeHints() {
       select.parentElement?.querySelector('[data-location-notices]') ??
       form?.querySelector('[data-location-notices]');
     if (!hint) return;
-    const notices = noticesForLocation(select.value);
-    hint.innerHTML = notices
-      .map((notice) =>
-        isPlaybook(notice)
-          ? `<p><strong>${text(notice.titleZh)}</strong> ${text(notice.cadence?.[0]?.labelZh ?? notice.bodyZh)}</p>`
-          : `<p><strong>${text(notice.titleZh)}</strong> ${text(notice.bodyZh)}</p>`
-      )
-      .join('');
-    hint.hidden = !notices.length;
+    const dateKeyValue = formScheduleDateKey(form);
+    hint.innerHTML = locationNoticeMarkup(select.value, { dateKey: dateKeyValue, wrap: false });
+    hint.hidden = !hint.innerHTML;
     if (!select.dataset.noticeBound) {
       select.dataset.noticeBound = 'true';
       select.addEventListener('change', renderLocationNoticeHints);
+      form
+        ?.querySelectorAll('input[name="scheduledStart"], input[name="preferredStart"]')
+        .forEach((input) => input.addEventListener('change', renderLocationNoticeHints));
     }
   });
 }
@@ -468,11 +545,19 @@ function renderLocationNoticeHints() {
 function renderOpsAlerts() {
   const root = $('[data-ops-alerts]');
   const list = $('[data-ops-alert-list]');
+  const datedList = $('[data-dated-alert-list]');
   if (!root || !list) return;
   const notices = activeNotices();
-  root.hidden = !notices.length;
+  const dated = [...activeDatedAlerts()].sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.id).localeCompare(String(b.id)));
+  root.hidden = !notices.length && !dated.length;
   list.innerHTML = notices.map(operationalNoticeCard).join('');
   bindNoticeEditors(list);
+  if (datedList) {
+    datedList.innerHTML = dated.length
+      ? dated.map(datedAlertCard).join('')
+      : '<div class="empty">未有日期提醒。課堂日曆唔會標賽馬日／封路，直至你加入。</div>';
+    bindDatedAlertEditors(datedList);
+  }
 }
 
 function checkLinesMarkup(notice) {
@@ -559,6 +644,95 @@ async function saveOperationalNotice(noticeId, input) {
   await load();
 }
 
+function datedAlertCard(alert) {
+  const locations = noticeLocationLabels(alert);
+  const source = alert.sourceUrl
+    ? `<p>${externalLink(alert.sourceUrl, alert.sourceLabelZh || alert.sourceUrl)}</p>`
+    : '';
+  return `<article class="ops-alert is-dated ${alert.kind === 'stadium_closure' ? 'is-stadium' : 'is-race'}" data-dated-alert-card="${text(alert.id)}">
+    <div class="ops-alert-head">
+      <div>
+        <h3>${text(alert.titleZh)}</h3>
+        <p class="ops-alert-locations">${text(alert.date)} · ${text(datedAlertKindLabel(alert.kind))} · ${text(
+          datedAlertSessionLabel(alert.session)
+        )} · ${text(locations || '全線適用')}</p>
+      </div>
+      <button type="button" class="secondary" data-edit-dated-alert>編輯</button>
+    </div>
+    <p>${text(alert.bodyZh)}</p>
+    <p class="ops-alert-en">${text(alert.titleEn)}</p>
+    <p class="ops-alert-en">${text(alert.bodyEn)}</p>
+    ${source}
+    <form class="ops-alert-form" data-dated-alert-form hidden>
+      <label>日期（香港）<input name="date" type="date" value="${text(alert.date)}" required /></label>
+      <label>
+        類型
+        <select name="kind">
+          <option value="race_day" ${alert.kind === 'race_day' ? 'selected' : ''}>跑馬地賽馬日（學牌禁行）</option>
+          <option value="stadium_closure" ${alert.kind === 'stadium_closure' ? 'selected' : ''}>大球場封路／學牌（須有 TD 通告）</option>
+        </select>
+      </label>
+      <label>
+        日／夜
+        <select name="session">
+          <option value="night" ${alert.session === 'night' ? 'selected' : ''}>夜</option>
+          <option value="day" ${alert.session === 'day' ? 'selected' : ''}>日</option>
+          <option value="all" ${alert.session === 'all' ? 'selected' : ''}>全日</option>
+        </select>
+      </label>
+      <label>標題（中）<input name="titleZh" value="${text(alert.titleZh)}" required /></label>
+      <label>標題（英）<input name="titleEn" value="${text(alert.titleEn ?? '')}" /></label>
+      <label>內容（中）<textarea name="bodyZh" rows="3" required>${text(alert.bodyZh)}</textarea></label>
+      <label>內容（英）<textarea name="bodyEn" rows="2">${text(alert.bodyEn ?? '')}</textarea></label>
+      <label>來源連結<input name="sourceUrl" type="url" value="${text(alert.sourceUrl ?? '')}" /></label>
+      <label>短標（日曆格）<input name="shortLabelZh" value="${text(alert.shortLabelZh ?? '')}" /></label>
+      <label class="inline-check"><input type="checkbox" name="active" ${alert.active !== false ? 'checked' : ''} /> 顯示喺日曆</label>
+      <div class="actions">
+        <button type="submit">儲存日期提醒</button>
+        <button type="button" class="secondary" data-cancel-dated-alert>返回</button>
+      </div>
+    </form>
+  </article>`;
+}
+
+async function saveDatedAlert(alertId, input) {
+  await api(`/api/dated-route-alerts/${alertId}`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  notice('日期提醒已更新。');
+  await load();
+}
+
+function bindDatedAlertEditors(root = document) {
+  $$('[data-dated-alert-card]', root).forEach((card) => {
+    const alertId = card.dataset.datedAlertCard;
+    const editButton = $('[data-edit-dated-alert]', card);
+    const form = $('[data-dated-alert-form]', card);
+    const cancelButton = $('[data-cancel-dated-alert]', card);
+    if (!editButton || !form) return;
+    editButton.addEventListener('click', () => {
+      form.hidden = false;
+      editButton.hidden = true;
+      form.elements.titleZh.focus();
+    });
+    cancelButton?.addEventListener('click', () => {
+      form.hidden = true;
+      editButton.hidden = false;
+    });
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const input = Object.fromEntries(new FormData(form));
+      input.active = Boolean(form.elements.active?.checked);
+      try {
+        await saveDatedAlert(alertId, input);
+      } catch (error) {
+        notice(error.message, true);
+      }
+    });
+  });
+}
+
 function bindNoticeEditors(root = document) {
   $$('[data-notice-card]', root).forEach((card) => {
     const noticeId = card.dataset.noticeCard;
@@ -614,7 +788,7 @@ function renderStudents() {
             <h3>${text(student?.name)} · ${text(type?.labelZh)}</h3>
             <p>${formatDate(lesson.scheduledStart)}</p>
             <p><strong>地點：${text(location?.labelZh || '未設定')}</strong></p>
-            ${locationNoticeMarkup(lesson.locationId, { compact: true })}
+            ${locationNoticeMarkup(lesson.locationId, { compact: true, dateKey: dateKey(lesson.scheduledStart) })}
             <div class="lesson-notes-block">
               ${notes ? `<p class="lesson-notes">${text(notes)}</p>` : `<p class="lesson-notes is-empty">未有備註</p>`}
               <button type="button" class="secondary notes-edit" data-edit-notes>編輯備註</button>
@@ -858,7 +1032,10 @@ function createWorkflowCard(workflow, isPending) {
       : '地點：未有課堂地點資料';
     const existing = locationLine.nextElementSibling;
     if (existing?.classList.contains('lesson-route-alerts')) existing.remove();
-    const markup = locationNoticeMarkup(lesson?.locationId, { compact: true });
+    const markup = locationNoticeMarkup(lesson?.locationId, {
+      compact: true,
+      dateKey: lesson?.scheduledStart ? dateKey(lesson.scheduledStart) : '',
+    });
     if (markup) locationLine.insertAdjacentHTML('afterend', markup);
   }
   const select = $('[data-slot]', card);
@@ -1051,23 +1228,35 @@ function renderBrief() {
   const brief = state.data.dailyBrief;
   const standing = brief.operationalNotices ?? activeNotices();
   const locationHits = brief.locationNotices ?? [];
+  const dated = brief.datedRouteAlerts ?? datedAlertsForDate(brief.date);
   const briefNotices = $('[data-brief-notices]');
   if (briefNotices) {
-    briefNotices.innerHTML = standing.length
-      ? standing
-          .map((item) => {
-            const tomorrowHit = locationHits.some((notice) => notice.id === item.id);
-            return `<article class="ops-alert ${isPlaybook(item) ? 'is-playbook' : ''}">
-              <h3>${text(item.titleZh)}</h3>
-              <p class="ops-alert-locations">${text(noticeLocationLabels(item) || '全線適用')}${
-                tomorrowHit ? ' · 明日掃桿埔課堂適用' : ''
-              }</p>
-              <p>${text(item.bodyZh)}</p>
-              <p class="ops-alert-en">${text(item.bodyEn)}</p>
-              ${playbookDetailsMarkup(item)}
-            </article>`;
-          })
-          .join('')
+    const datedMarkup = dated
+      .map(
+        (item) => `<article class="ops-alert is-dated ${item.kind === 'stadium_closure' ? 'is-stadium' : 'is-race'}">
+          <h3>${text(item.titleZh)}</h3>
+          <p class="ops-alert-locations">${text(item.date)} · ${text(datedAlertKindLabel(item.kind))} · 明日適用</p>
+          <p>${text(item.bodyZh)}</p>
+          <p class="ops-alert-en">${text(item.bodyEn)}</p>
+        </article>`
+      )
+      .join('');
+    const standingMarkup = standing
+      .map((item) => {
+        const tomorrowHit = locationHits.some((notice) => notice.id === item.id);
+        return `<article class="ops-alert ${isPlaybook(item) ? 'is-playbook' : ''}">
+          <h3>${text(item.titleZh)}</h3>
+          <p class="ops-alert-locations">${text(noticeLocationLabels(item) || '全線適用')}${
+            tomorrowHit ? ' · 明日掃桿埔課堂適用' : ''
+          }</p>
+          <p>${text(item.bodyZh)}</p>
+          <p class="ops-alert-en">${text(item.bodyEn)}</p>
+          ${playbookDetailsMarkup(item)}
+        </article>`;
+      })
+      .join('');
+    briefNotices.innerHTML = datedMarkup || standingMarkup
+      ? `${datedMarkup}${standingMarkup}`
       : '<div class="empty">未有常設注意事項</div>';
   }
   const blocks = [
@@ -1078,7 +1267,7 @@ function renderBrief() {
             .map((lesson) => {
               const location = state.data.locations.find((item) => item.id === lesson.locationId);
               return `<p>${formatDate(lesson.scheduledStart)} · ${text(location?.labelZh ?? '')}</p>
-                ${locationNoticeMarkup(lesson.locationId, { compact: true })}`;
+                ${locationNoticeMarkup(lesson.locationId, { compact: true, dateKey: dateKey(lesson.scheduledStart) })}`;
             })
             .join('')
         : '<p>未有課堂</p>',
@@ -1168,6 +1357,7 @@ $('[data-logout]').addEventListener('click', () => {
   $('[data-stats]').replaceChildren();
   $('[data-ops-alerts]').hidden = true;
   $('[data-ops-alert-list]').replaceChildren();
+  $('[data-dated-alert-list]')?.replaceChildren();
   $('[data-brief-notices]')?.replaceChildren();
   $('[data-students]').innerHTML = '';
   $('[data-lessons]').innerHTML = '';
@@ -1263,6 +1453,27 @@ $('[data-payment-form]').addEventListener('submit', async (event) => {
     notice('付款紀錄已儲存。');
     await load();
     $('[data-tab="accounting"]').click();
+  } catch (error) {
+    notice(error.message, true);
+  }
+});
+
+$('[data-dated-alert-create]')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const input = Object.fromEntries(new FormData(form));
+  input.locationIds = ['so_kon_po'];
+  if (input.kind === 'race_day' && !input.shortLabelZh) {
+    input.shortLabelZh = input.session === 'day' ? '日賽學牌' : '夜賽學牌';
+  }
+  if (input.kind === 'stadium_closure' && !input.shortLabelZh) {
+    input.shortLabelZh = '大球場封路';
+  }
+  try {
+    await api('/api/dated-route-alerts', { method: 'POST', body: JSON.stringify(input) });
+    form.reset();
+    notice('已加入日期提醒，日曆會標示嗰日。');
+    await load();
   } catch (error) {
     notice(error.message, true);
   }

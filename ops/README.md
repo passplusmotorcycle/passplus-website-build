@@ -19,6 +19,11 @@ be shipped as static browser assets.
   calendar) for race-day learner bans, Stadium closures + learner bans, and a 「點查／幾時查」
   playbook. Ordinary diversions are out of scope. Calendar days with So Kon Po lessons show a
   route-notice flag and the notices when that day is opened.
+- Dated race-day / Stadium-closure alerts in `ops.json` (`datedRouteAlerts`). Staff can edit or add
+  them on the dashboard. The class calendar marks those dates even with no lesson that day; day
+  detail, today’s So Kon Po lessons, scheduling hints, and the next-day brief show the dated item.
+  Seeded Happy Valley learner-ban days follow the seasonal TD notice; Stadium days are seeded only
+  when a TD closure/learner-ban notice exists (a fire drill alone is not seeded).
 - Permission foundations for sales, student-success, finance, and compliance agents.
 - No automatic WhatsApp sending, payment commitment, refund, legal answer, or cancellation.
 

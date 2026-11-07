@@ -18,6 +18,9 @@ import {
 } from './lib/agents.js';
 import {
   assertEnum,
+  DATED_ALERT_KINDS,
+  DATED_ALERT_SESSIONS,
+  isDateKey,
   licensingStages,
   lessonTypes,
   statuses,
@@ -154,6 +157,7 @@ export async function createOpsServer(options = {}) {
           instructors: data.instructors,
           locations: data.locations,
           operationalNotices: data.operationalNotices ?? [],
+          datedRouteAlerts: data.datedRouteAlerts ?? [],
           vehicles: data.vehicles,
           lessons: data.lessons,
           exams: data.exams,
@@ -261,6 +265,89 @@ export async function createOpsServer(options = {}) {
           if (input.standing !== undefined) notice.standing = Boolean(input.standing);
           notice.updatedAt = new Date().toISOString();
           return { entityType: 'operationalNotice', entityId: notice.id, value: notice };
+        });
+        return json(res, 200, value);
+      }
+
+      if (req.method === 'POST' && pathname === '/api/dated-route-alerts') {
+        const input = await body(req);
+        validateRequired(input, ['date', 'titleZh', 'bodyZh']);
+        if (!isDateKey(input.date)) throw new Error('date must be YYYY-MM-DD');
+        assertEnum(input.kind ?? 'race_day', DATED_ALERT_KINDS, 'kind');
+        assertEnum(input.session ?? 'all', DATED_ALERT_SESSIONS, 'session');
+        const alert = createEntity(input, ['date', 'titleZh', 'bodyZh'], {
+          titleEn: input.titleEn ?? '',
+          bodyEn: input.bodyEn ?? '',
+          kind: input.kind ?? 'race_day',
+          session: input.session ?? 'all',
+          locationIds: Array.isArray(input.locationIds) ? input.locationIds : ['so_kon_po'],
+          severity: input.severity ?? 'warning',
+          sourceUrl: input.sourceUrl ?? '',
+          sourceLabelZh: input.sourceLabelZh ?? '',
+          sourceLabelEn: input.sourceLabelEn ?? '',
+          shortLabelZh: input.shortLabelZh ?? '',
+          shortLabelEn: input.shortLabelEn ?? '',
+          active: input.active !== false,
+        });
+        const value = await store.transact(actor(req), 'datedRouteAlert.create', (data) => {
+          if (!Array.isArray(data.datedRouteAlerts)) data.datedRouteAlerts = [];
+          for (const locationId of alert.locationIds) {
+            if (!data.locations.some((item) => item.id === locationId)) {
+              throw new Error('Location not found');
+            }
+          }
+          data.datedRouteAlerts.push(alert);
+          return { entityType: 'datedRouteAlert', entityId: alert.id, value: alert };
+        });
+        return json(res, 201, value);
+      }
+
+      const datedAlertId = routeId(pathname, /^\/api\/dated-route-alerts\/([^/]+)$/);
+      if (req.method === 'POST' && datedAlertId) {
+        const input = await body(req);
+        const value = await store.transact(actor(req), 'datedRouteAlert.update', (data) => {
+          const alert = data.datedRouteAlerts?.find((item) => item.id === datedAlertId);
+          if (!alert) throw new Error('Dated alert not found');
+          if (input.date !== undefined) {
+            if (!isDateKey(input.date)) throw new Error('date must be YYYY-MM-DD');
+            alert.date = input.date;
+          }
+          if (input.kind !== undefined) {
+            assertEnum(input.kind, DATED_ALERT_KINDS, 'kind');
+            alert.kind = input.kind;
+          }
+          if (input.session !== undefined) {
+            assertEnum(input.session, DATED_ALERT_SESSIONS, 'session');
+            alert.session = input.session;
+          }
+          const locationIds = input.locationIds ?? alert.locationIds;
+          if (Array.isArray(locationIds)) {
+            for (const locationId of locationIds) {
+              if (!data.locations.some((item) => item.id === locationId)) {
+                throw new Error('Location not found');
+              }
+            }
+            alert.locationIds = locationIds;
+          }
+          for (const field of [
+            'titleZh',
+            'titleEn',
+            'bodyZh',
+            'bodyEn',
+            'severity',
+            'sourceUrl',
+            'sourceLabelZh',
+            'sourceLabelEn',
+            'shortLabelZh',
+            'shortLabelEn',
+          ]) {
+            if (input[field] !== undefined) alert[field] = String(input[field]);
+          }
+          if (input.active !== undefined) {
+            alert.active = input.active === true || input.active === 'true';
+          }
+          alert.updatedAt = new Date().toISOString();
+          return { entityType: 'datedRouteAlert', entityId: alert.id, value: alert };
         });
         return json(res, 200, value);
       }

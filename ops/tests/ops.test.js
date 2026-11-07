@@ -18,7 +18,10 @@ import { buildAccountingReport, lessonAmountHkd } from '../lib/accounting.js';
 import { schedulingConflicts } from '../lib/scheduling.js';
 import { createOpsServer } from '../server.js';
 import {
+  datedAlertsForDate,
+  datedRouteAlerts,
   lessonTypes,
+  mergeSeedDatedRouteAlerts,
   mergeSeedOperationalNotices,
   noticesForLessons,
   noticesForLocation,
@@ -561,4 +564,138 @@ test('API requires bearer token when configured', async (t) => {
       .bodyZh,
     '已人手更新嘅賽馬日提示'
   );
+});
+
+test('seeded dated alerts mark HV race days and TD stadium closures, not fire drills', () => {
+  const nov11 = datedAlertsForDate(datedRouteAlerts, '2026-11-11');
+  const nov18 = datedAlertsForDate(datedRouteAlerts, '2026-11-18');
+  const nov25 = datedAlertsForDate(datedRouteAlerts, '2026-11-25');
+  for (const day of [nov11, nov18, nov25]) {
+    assert.equal(day.length, 1);
+    assert.equal(day[0].kind, 'race_day');
+    assert.equal(day[0].session, 'night');
+    assert.match(day[0].bodyZh, /加路連山道左轉禮頓道/);
+    assert.match(day[0].bodyZh, /山光道/);
+    assert.match(day[0].bodyZh, /山村道/);
+    assert.match(day[0].bodyZh, /普通/);
+    assert.match(day[0].sourceUrl, /index_id_88570/);
+    assert.ok(!/改道提醒/.test(day[0].titleZh));
+  }
+
+  const nov1 = datedAlertsForDate(datedRouteAlerts, '2026-11-01');
+  assert.ok(nov1.some((alert) => alert.kind === 'race_day' && alert.session === 'day'));
+  const stadium = nov1.find((alert) => alert.kind === 'stadium_closure');
+  assert.ok(stadium);
+  assert.match(stadium.bodyZh, /封路/);
+  assert.match(stadium.bodyZh, /學牌/);
+  assert.match(stadium.sourceUrl, /index_id_89550/);
+
+  assert.equal(datedAlertsForDate(datedRouteAlerts, '2026-11-09').length, 0);
+  assert.ok(datedAlertsForDate(datedRouteAlerts, '2026-12-02').some((alert) => alert.kind === 'race_day'));
+  assert.equal(datedAlertsForDate(datedRouteAlerts, '2026-11-08').length, 0);
+});
+
+test('dated alerts are seeded into existing ops.json without overwriting staff edits', async (t) => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'passplus-ops-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const filePath = path.join(directory, 'ops.json');
+  const store = await new JsonStore(filePath).init();
+  assert.equal(store.snapshot().datedRouteAlerts.length, datedRouteAlerts.length);
+  assert.ok(store.snapshot().datedRouteAlerts.some((alert) => alert.id === 'hv_race_2026-11-11'));
+
+  const legacy = store.snapshot();
+  delete legacy.datedRouteAlerts;
+  store.data = legacy;
+  await store.persist();
+  const reopened = await new JsonStore(filePath).init();
+  assert.equal(reopened.snapshot().datedRouteAlerts.length, datedRouteAlerts.length);
+
+  const data = {
+    datedRouteAlerts: [
+      {
+        id: 'hv_race_2026-11-11',
+        date: '2026-11-11',
+        kind: 'race_day',
+        bodyZh: '職員改過嘅夜賽提示',
+        locationIds: ['so_kon_po'],
+        active: true,
+      },
+    ],
+  };
+  assert.ok(mergeSeedDatedRouteAlerts(data) >= 1);
+  assert.equal(
+    data.datedRouteAlerts.find((alert) => alert.id === 'hv_race_2026-11-11').bodyZh,
+    '職員改過嘅夜賽提示'
+  );
+  assert.ok(data.datedRouteAlerts.some((alert) => alert.id === 'stadium_2026-11-01_scout_rally'));
+});
+
+test('daily brief exposes dated alerts for that Hong Kong calendar day', async (t) => {
+  const { directory, store } = await fixture();
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const data = store.snapshot();
+  const raceBrief = buildDailyBrief(data, new Date('2026-11-11T04:00:00.000Z'));
+  assert.ok(raceBrief.datedRouteAlerts.some((alert) => alert.id === 'hv_race_2026-11-11'));
+  const fireDrill = buildDailyBrief(data, new Date('2026-11-09T04:00:00.000Z'));
+  assert.equal(fireDrill.datedRouteAlerts.length, 0);
+});
+
+test('staff can create and update dated route alerts via API', async (t) => {
+  const { directory, store } = await fixture();
+  const server = await createOpsServer({ store, adminToken: 'test-secret' });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => {
+    await new Promise((resolve) => server.close(resolve));
+    await rm(directory, { recursive: true, force: true });
+  });
+  const address = server.address();
+  const base = `http://127.0.0.1:${address.port}`;
+  const headers = {
+    Authorization: 'Bearer test-secret',
+    'Content-Type': 'application/json',
+  };
+
+  const created = await fetch(`${base}/api/dated-route-alerts`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      date: '2026-12-30',
+      kind: 'stadium_closure',
+      session: 'day',
+      titleZh: '大球場測試封路',
+      bodyZh: '有 TD 通告先入。',
+      locationIds: ['so_kon_po'],
+    }),
+  });
+  assert.equal(created.status, 201);
+  const createdBody = await created.json();
+
+  const updated = await fetch(`${base}/api/dated-route-alerts/${createdBody.id}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ bodyZh: '已改過嘅封路提示', active: true }),
+  });
+  assert.equal(updated.status, 200);
+
+  const bootstrap = await fetch(`${base}/api/bootstrap`, {
+    headers: { Authorization: 'Bearer test-secret' },
+  });
+  const payload = await bootstrap.json();
+  assert.ok(payload.datedRouteAlerts.some((alert) => alert.id === 'hv_race_2026-11-18'));
+  assert.equal(
+    payload.datedRouteAlerts.find((alert) => alert.id === createdBody.id).bodyZh,
+    '已改過嘅封路提示'
+  );
+
+  const invalid = await fetch(`${base}/api/dated-route-alerts`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      date: '11/11/2026',
+      kind: 'race_day',
+      titleZh: '壞日期',
+      bodyZh: '唔應該寫入',
+    }),
+  });
+  assert.equal(invalid.status, 422);
 });

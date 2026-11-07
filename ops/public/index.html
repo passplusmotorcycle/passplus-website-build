@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>PassPlus 營運控制台</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=20261101-ops-calendar-notices" />
+    <link rel="stylesheet" href="/styles.css?v=20261107-dated-alerts" />
   </head>
   <body>
     <header class="topbar">
@@ -43,6 +43,45 @@
           <p class="footnote">只跟封路阻路線 ＋ 學牌禁行 · 普通改道唔入 · 可喺下面改字</p>
         </div>
         <div class="ops-alert-list" data-ops-alert-list></div>
+        <div class="dated-alerts-block">
+          <div class="ops-alerts-head">
+            <div>
+              <p class="eyebrow">DATED RACE / CLOSURE DAYS</p>
+              <h2>有日期嘅賽馬日／封路</h2>
+            </div>
+            <p class="footnote">課堂日曆會標呢啲日子 · 職員可加／改 · 火警演習本身唔入</p>
+          </div>
+          <div class="ops-alert-list" data-dated-alert-list></div>
+          <form class="ops-alert-form is-create" data-dated-alert-create>
+            <h3>新增有日期提醒</h3>
+            <div class="grid-two">
+              <label>日期（香港）<input name="date" type="date" required /></label>
+              <label>
+                類型
+                <select name="kind" required>
+                  <option value="race_day">跑馬地賽馬日（學牌禁行）</option>
+                  <option value="stadium_closure">大球場封路／學牌（須有 TD 通告）</option>
+                </select>
+              </label>
+              <label>
+                日／夜
+                <select name="session">
+                  <option value="night">夜</option>
+                  <option value="day">日</option>
+                  <option value="all">全日</option>
+                </select>
+              </label>
+              <label>來源連結<input name="sourceUrl" type="url" placeholder="https://www.td.gov.hk/..." /></label>
+            </div>
+            <label>標題（中）<input name="titleZh" required placeholder="例如：跑馬地夜賽：學牌禁行" /></label>
+            <label>內容（中）<textarea name="bodyZh" rows="3" required placeholder="只寫學牌禁行或阻路線封路。普通改道唔入。"></textarea></label>
+            <label>標題（英）<input name="titleEn" /></label>
+            <label>內容（英）<textarea name="bodyEn" rows="2"></textarea></label>
+            <div class="actions">
+              <button type="submit">加入日期提醒</button>
+            </div>
+          </form>
+        </div>
       </section>
 
       <section class="stats" data-stats aria-label="試行指標"></section>
@@ -153,6 +192,12 @@
               <button type="button" class="secondary calendar-arrow" data-calendar-next aria-label="下一個月">›</button>
             </div>
           </div>
+          <p class="calendar-legend">
+            <span class="calendar-flag is-race">夜賽學牌</span>
+            跑馬地賽馬日學牌禁行 ·
+            <span class="calendar-flag is-stadium">大球場封路</span>
+            有 TD 封路／學牌通告嘅大球場活動 · 火警演習同普通改道唔標
+          </p>
           <div class="calendar-weekdays" aria-hidden="true">
             <span>日</span><span>一</span><span>二</span><span>三</span>
             <span>四</span><span>五</span><span>六</span>
@@ -369,6 +414,6 @@
       </article>
     </template>
 
-    <script type="module" src="/app.js?v=20261101-ops-calendar-notices"></script>
+    <script type="module" src="/app.js?v=20261107-dated-alerts"></script>
   </body>
 </html>
