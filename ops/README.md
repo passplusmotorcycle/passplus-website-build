@@ -6,7 +6,7 @@ be shipped as static browser assets.
 
 ## What is implemented
 
-- Unified JSON data model for students, instructors, locations, vehicles, lessons, exams, payments,
+- Unified JSON data model for students, instructors, locations, operational notices, vehicles, lessons, exams, payments,
   workflow tasks, agent runs, and audit logs.
 - Conflict checks for student, instructor, vehicle, and location.
 - Three alternative time proposals within 14 days (08:00–20:00 Hong Kong time).
@@ -15,6 +15,10 @@ be shipped as static browser assets.
 - Explicit escalation for refunds, licensing/legal answers, safety, complaints, special prices, and
   final cancellations.
 - 14-day pilot metrics and a next-day operations brief.
+- Standing bilingual So Kon Po notices (seeded into `ops.json`, shown on the dashboard and class
+  calendar) for race-day learner bans, Stadium closures + learner bans, and a 「點查／幾時查」
+  playbook. Ordinary diversions are out of scope. Calendar days with So Kon Po lessons show a
+  route-notice flag and the notices when that day is opened.
 - Permission foundations for sales, student-success, finance, and compliance agents.
 - No automatic WhatsApp sending, payment commitment, refund, legal answer, or cancellation.
 
@@ -100,6 +104,7 @@ Approval never sends a message. Escalated workflows require an extra explicit co
 | Student | Identity and journey | name, WhatsApp, language, licensing stage, purchased/used lessons |
 | Instructor | Availability resource | languages, default locations, active |
 | Location | Conflict resource | Tin Kwong Road / So Kon Po, type, bilingual labels |
+| OperationalNotice | Standing So Kon Po alert / check playbook | locationIds, bilingual title/body, checkHow/When, sources, cadence; only closures + learner bans |
 | Vehicle | Rental/training resource | code, model, location, availability |
 | Lesson | Schedule and package usage | student, type, resources, start, duration, price snapshot, status |
 | Exam | Countdown and rental coordination | student, part, date, status |

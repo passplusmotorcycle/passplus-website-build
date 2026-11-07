@@ -153,6 +153,7 @@ export async function createOpsServer(options = {}) {
           students: data.students.map(publicStudent),
           instructors: data.instructors,
           locations: data.locations,
+          operationalNotices: data.operationalNotices ?? [],
           vehicles: data.vehicles,
           lessons: data.lessons,
           exams: data.exams,
@@ -202,6 +203,66 @@ export async function createOpsServer(options = {}) {
           return { entityType: 'instructor', entityId: instructor.id, value: instructor };
         });
         return json(res, 201, value);
+      }
+
+      if (req.method === 'POST' && pathname === '/api/operational-notices') {
+        const input = await body(req);
+        validateRequired(input, ['titleZh', 'bodyZh']);
+        const notice = createEntity(input, ['titleZh', 'bodyZh'], {
+          titleEn: input.titleEn ?? '',
+          bodyEn: input.bodyEn ?? '',
+          locationIds: Array.isArray(input.locationIds) ? input.locationIds : [],
+          severity: input.severity ?? 'warning',
+          standing: input.standing !== false,
+          active: input.active !== false,
+        });
+        const value = await store.transact(actor(req), 'operationalNotice.create', (data) => {
+          if (!Array.isArray(data.operationalNotices)) data.operationalNotices = [];
+          for (const locationId of notice.locationIds) {
+            if (!data.locations.some((item) => item.id === locationId)) {
+              throw new Error('Location not found');
+            }
+          }
+          data.operationalNotices.push(notice);
+          return { entityType: 'operationalNotice', entityId: notice.id, value: notice };
+        });
+        return json(res, 201, value);
+      }
+
+      const noticeId = routeId(pathname, /^\/api\/operational-notices\/([^/]+)$/);
+      if (req.method === 'POST' && noticeId) {
+        const input = await body(req);
+        const value = await store.transact(actor(req), 'operationalNotice.update', (data) => {
+          const notice = data.operationalNotices?.find((item) => item.id === noticeId);
+          if (!notice) throw new Error('Notice not found');
+          const locationIds = input.locationIds ?? notice.locationIds;
+          if (Array.isArray(locationIds)) {
+            for (const locationId of locationIds) {
+              if (!data.locations.some((item) => item.id === locationId)) {
+                throw new Error('Location not found');
+              }
+            }
+            notice.locationIds = locationIds;
+          }
+          for (const field of [
+            'titleZh',
+            'titleEn',
+            'bodyZh',
+            'bodyEn',
+            'severity',
+            'checkHowZh',
+            'checkHowEn',
+            'checkWhenZh',
+            'checkWhenEn',
+          ]) {
+            if (input[field] !== undefined) notice[field] = String(input[field]);
+          }
+          if (input.active !== undefined) notice.active = Boolean(input.active);
+          if (input.standing !== undefined) notice.standing = Boolean(input.standing);
+          notice.updatedAt = new Date().toISOString();
+          return { entityType: 'operationalNotice', entityId: notice.id, value: notice };
+        });
+        return json(res, 200, value);
       }
 
       if (req.method === 'POST' && pathname === '/api/vehicles') {

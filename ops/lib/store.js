@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { seedData } from './domain.js';
+import { mergeSeedOperationalNotices, seedData } from './domain.js';
 
 function clone(value) {
   return structuredClone(value);
@@ -35,7 +35,9 @@ export class JsonStore {
       this.data = seedData();
       await this.persist();
     }
-    if (normalizeLessonDurations(this.data)) {
+    const noticesAdded = mergeSeedOperationalNotices(this.data);
+    const durationsChanged = normalizeLessonDurations(this.data);
+    if (noticesAdded || durationsChanged) {
       await this.persist();
     }
     return this;
