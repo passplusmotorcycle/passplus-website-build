@@ -20,7 +20,16 @@ const ESCALATION_PATTERNS = [
 export const agentRegistry = Object.freeze({
   operations: {
     status: 'active',
-    mayRead: ['students', 'instructors', 'locations', 'vehicles', 'lessons', 'exams', 'operationalNotices'],
+    mayRead: [
+      'students',
+      'instructors',
+      'locations',
+      'vehicles',
+      'lessons',
+      'exams',
+      'operationalNotices',
+      'datedRouteAlerts',
+    ],
     mayDraft: ['lesson_proposal', 'whatsapp_reply'],
     mayExecute: [],
   },

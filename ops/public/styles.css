@@ -234,6 +234,9 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
 .calendar-day-notices ul { margin: 0.4rem 0 0; padding-left: 1.15rem; font-size: 0.86rem; line-height: 1.45; }
 .calendar-day-notices.is-on-navy { margin-top: 0.85rem; }
 .calendar-day.has-route-notices { background: #fff8c5; }
+.calendar-day.has-dated-alerts { background: #fff4d6; }
+.calendar-day.is-stadium-day { background: #ffe8d6; }
+.calendar-day.is-race-day.is-stadium-day { background: #ffe0c2; }
 .calendar-route-flag {
   display: block;
   margin-top: 0.25rem;
@@ -241,6 +244,66 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
   font-size: 0.62rem;
   font-weight: 800;
 }
+.calendar-legend {
+  margin: 0 0 0.85rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.calendar-alert-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  margin-top: 0.28rem;
+}
+.calendar-flag {
+  display: inline-block;
+  padding: 0.12rem 0.32rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+.calendar-flag.is-race {
+  color: #7a4b00;
+  background: #ffe08a;
+}
+.calendar-flag.is-stadium {
+  color: #7a2200;
+  background: #ffb38a;
+}
+.calendar-day-notices.is-dated {
+  border-left-color: #c2410c;
+  background: #fff1e6;
+}
+.ops-alert.is-dated.is-race { border-color: #eab308; background: #fffbeb; }
+.ops-alert.is-dated.is-stadium { border-color: #f97316; background: #fff7ed; }
+.lesson-route-alerts .is-dated,
+.location-notices .is-dated {
+  color: #7a4b00;
+  font-weight: 700;
+}
+.dated-alerts-block {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #d4a72c;
+}
+.ops-alert-form.is-create {
+  margin-top: 0.85rem;
+  padding: 0.85rem 0.95rem;
+  background: var(--white);
+  border: 1px dashed #d4a72c;
+  border-radius: 0.55rem;
+}
+.ops-alert-form.is-create h3 { margin: 0 0 0.55rem; font-size: 0.95rem; }
+.inline-check {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+}
+.inline-check input { width: auto; }
 .calendar-card, .selected-day {
   margin-bottom: 1.5rem;
   padding: 1.15rem;
@@ -423,6 +486,7 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
   .calendar-day.is-today .calendar-day-number { width: 1.5rem; height: 1.5rem; margin: 0 auto; }
   .calendar-events { display: none; }
   .calendar-event-count { display: block; margin-top: 0.2rem; }
-  .calendar-route-flag { font-size: 0.58rem; }
+  .calendar-route-flag, .calendar-flag { font-size: 0.55rem; }
+  .calendar-alert-flags { justify-content: center; }
   .calendar-lesson { grid-template-columns: auto 1fr; padding: 0.75rem; }
 }

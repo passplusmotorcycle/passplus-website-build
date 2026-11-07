@@ -1,6 +1,8 @@
 import {
   SLOT_STEP_MINUTES,
   activeOperationalNotices,
+  datedAlertsForDate,
+  datedAlertsForLessons,
   durationMinutesFor,
   lessonTypes,
   noticesForLocation,
@@ -237,6 +239,8 @@ export function buildDailyBrief(data, date = new Date()) {
     // Standing route notices stay on the brief even when tomorrow has no So Kon Po lessons.
     operationalNotices: activeOperationalNotices(data.operationalNotices),
     locationNotices: relevantNotices,
+    datedRouteAlerts: datedAlertsForDate(data.datedRouteAlerts, target),
+    lessonDatedAlerts: datedAlertsForLessons(data.datedRouteAlerts, lessons),
     checkPlaybook:
       activeOperationalNotices(data.operationalNotices).find((notice) => notice.kind === 'playbook') ?? null,
   };

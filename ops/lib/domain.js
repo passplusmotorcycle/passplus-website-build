@@ -251,6 +251,88 @@ export const operationalNotices = Object.freeze([
   },
 ]);
 
+export const DATED_ALERT_KINDS = Object.freeze(['race_day', 'stadium_closure']);
+export const DATED_ALERT_SESSIONS = Object.freeze(['day', 'night', 'all']);
+export const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const HV_SEASONAL_TD_URL = 'https://www.td.gov.hk/tc/traffic_notices/index_id_88570.html';
+const HV_LEARNER_BAN_ZH =
+  '季節通告：由首場前 1.5 小時至尾場後 1 小時，學牌禁由加路連山道左轉禮頓道；禁行山光道（奕蔭街至黃泥涌道）同山村道（山村道／山光道上、下交界）等。只跟學牌禁行；黃泥涌道普通封路／改道唔入呢個提醒。';
+const HV_LEARNER_BAN_EN =
+  'Seasonal TD notice: from 1.5 hours before the first race until 1 hour after the last, learner (學牌) vehicles may not turn left from Caroline Hill Road onto Leighton Road, and may not enter Shan Kwong Road (Yik Yam Street to Wong Nai Chung Road) or Village Road (between Village Road and the Shan Kwong junctions). Learner bans only — ordinary Wong Nai Chung diversions are not this reminder.';
+
+function happyValleyRaceDayAlert(date, session) {
+  const isNight = session === 'night';
+  return {
+    id: `hv_race_${date}`,
+    date,
+    kind: 'race_day',
+    locationIds: ['so_kon_po'],
+    session,
+    severity: 'warning',
+    active: true,
+    titleZh: isNight ? '跑馬地夜賽：學牌禁行' : '跑馬地日賽：學牌禁行',
+    titleEn: isNight ? 'Happy Valley night race: learner-plate ban' : 'Happy Valley day race: learner-plate ban',
+    bodyZh: `${date} ${isNight ? '夜賽' : '日賽'}。${HV_LEARNER_BAN_ZH}`,
+    bodyEn: `${date} ${isNight ? 'night' : 'day'} meeting. ${HV_LEARNER_BAN_EN}`,
+    sourceUrl: HV_SEASONAL_TD_URL,
+    sourceLabelZh: '運輸署 2026/2027 季度跑馬地賽馬日通告',
+    sourceLabelEn: 'TD 2026/2027 Happy Valley race-day notice',
+    shortLabelZh: isNight ? '夜賽學牌' : '日賽學牌',
+    shortLabelEn: isNight ? 'HV night learner ban' : 'HV day learner ban',
+  };
+}
+
+// HKJC Happy Valley fixtures (Asia/Hong_Kong). Stadium fire drill on 2026-11-09 is
+// intentionally omitted — a fire exercise alone is not a TD closure/learner-ban day.
+const HAPPY_VALLEY_RACE_DAYS = Object.freeze([
+  ['2026-11-01', 'day'],
+  ['2026-11-04', 'night'],
+  ['2026-11-11', 'night'],
+  ['2026-11-18', 'night'],
+  ['2026-11-25', 'night'],
+  ['2026-12-02', 'night'],
+  ['2026-12-09', 'night'],
+  ['2026-12-16', 'night'],
+  ['2026-12-23', 'night'],
+]);
+
+export const datedRouteAlerts = Object.freeze([
+  ...HAPPY_VALLEY_RACE_DAYS.map(([date, session]) => Object.freeze(happyValleyRaceDayAlert(date, session))),
+  Object.freeze({
+    id: 'stadium_2026-11-01_scout_rally',
+    date: '2026-11-01',
+    kind: 'stadium_closure',
+    locationIds: ['so_kon_po'],
+    session: 'day',
+    severity: 'warning',
+    active: true,
+    titleZh: '大球場童軍大會操：封路＋學牌禁行',
+    titleEn: 'Stadium Scout Rally: closures + learner ban',
+    bodyZh:
+      '2026-11-01 有運輸署特別通告：加路連山道等封路阻掃桿埔考試／課堂路線；學牌 06:00–13:00 禁行加路連山道／連道／大球場徑／棉花路／東院道／禮頓道西行等。火警演習本身唔入提醒。',
+    bodyEn:
+      '1 Nov 2026 TD special notice: closures on Caroline Hill Road and related So Kon Po exam/lesson roads; learner ban 06:00–13:00 on Caroline Hill / Link / Stadium Path / Cotton Path / Eastern Hospital / Leighton westbound. A stadium fire drill alone is not an OPS reminder.',
+    sourceUrl: 'https://www.td.gov.hk/tc/traffic_notices/index_id_89550.html',
+    sourceLabelZh: '運輸署童軍大會操交通通告',
+    sourceLabelEn: 'TD Scout Rally traffic notice',
+    shortLabelZh: '大球場封路',
+    shortLabelEn: 'Stadium closure',
+  }),
+]);
+
+const DATED_ALERT_FILL_FIELDS = Object.freeze([
+  'kind',
+  'session',
+  'sourceUrl',
+  'sourceLabelZh',
+  'sourceLabelEn',
+  'shortLabelZh',
+  'shortLabelEn',
+  'locationIds',
+  'severity',
+]);
+
 const NOTICE_FILL_FIELDS = Object.freeze([
   'kind',
   'checkHowZh',
@@ -313,6 +395,68 @@ export function mergeSeedOperationalNotices(data, now = new Date().toISOString()
       continue;
     }
     for (const field of NOTICE_FILL_FIELDS) {
+      if (seed[field] == null || existing[field] != null) continue;
+      existing[field] = structuredClone(seed[field]);
+      changed += 1;
+    }
+  }
+  return changed;
+}
+
+export function isDateKey(value) {
+  return DATE_KEY_PATTERN.test(String(value ?? ''));
+}
+
+export function hongKongDateKey(value = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Hong_Kong',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(value));
+}
+
+export function activeDatedRouteAlerts(alerts = datedRouteAlerts) {
+  return (alerts ?? []).filter((alert) => alert.active !== false);
+}
+
+export function datedAlertsForDate(alerts, dateKey) {
+  if (!isDateKey(dateKey)) return [];
+  return activeDatedRouteAlerts(alerts)
+    .filter((alert) => alert.date === dateKey)
+    .sort((a, b) => String(a.kind).localeCompare(String(b.kind)) || String(a.id).localeCompare(String(b.id)));
+}
+
+export function datedAlertsForLocationDate(alerts, locationId, dateKey) {
+  return datedAlertsForDate(alerts, dateKey).filter(
+    (alert) => !alert.locationIds?.length || alert.locationIds.includes(locationId)
+  );
+}
+
+export function datedAlertsForLessons(alerts, lessons) {
+  const seen = new Map();
+  for (const lesson of lessons ?? []) {
+    if (!lesson?.locationId) continue;
+    const dateKey = hongKongDateKey(lesson.scheduledStart);
+    for (const alert of datedAlertsForLocationDate(alerts, lesson.locationId, dateKey)) {
+      seen.set(alert.id, alert);
+    }
+  }
+  return [...seen.values()];
+}
+
+export function mergeSeedDatedRouteAlerts(data, now = new Date().toISOString()) {
+  if (!Array.isArray(data.datedRouteAlerts)) data.datedRouteAlerts = [];
+  const existingById = new Map(data.datedRouteAlerts.map((alert) => [alert.id, alert]));
+  let changed = 0;
+  for (const seed of datedRouteAlerts) {
+    const existing = existingById.get(seed.id);
+    if (!existing) {
+      data.datedRouteAlerts.push({ ...structuredClone(seed), createdAt: now, updatedAt: now });
+      changed += 1;
+      continue;
+    }
+    for (const field of DATED_ALERT_FILL_FIELDS) {
       if (seed[field] == null || existing[field] != null) continue;
       existing[field] = structuredClone(seed[field]);
       changed += 1;
@@ -399,6 +543,11 @@ export function seedData() {
     locations: locations.map((location) => ({ ...location, createdAt: now, updatedAt: now })),
     operationalNotices: operationalNotices.map((notice) => ({
       ...notice,
+      createdAt: now,
+      updatedAt: now,
+    })),
+    datedRouteAlerts: datedRouteAlerts.map((alert) => ({
+      ...alert,
       createdAt: now,
       updatedAt: now,
     })),
