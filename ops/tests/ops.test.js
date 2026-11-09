@@ -699,3 +699,38 @@ test('staff can create and update dated route alerts via API', async (t) => {
   });
   assert.equal(invalid.status, 422);
 });
+
+test('OPS dashboard dated alerts block is collapsible on mobile', async (t) => {
+  const { directory, store } = await fixture();
+  const server = await createOpsServer({ store, adminToken: 'test-secret' });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => {
+    await new Promise((resolve) => server.close(resolve));
+    await rm(directory, { recursive: true, force: true });
+  });
+  const address = server.address();
+  const base = `http://127.0.0.1:${address.port}`;
+
+  const html = await (await fetch(`${base}/`)).text();
+  const css = await (await fetch(`${base}/styles.css`)).text();
+  const js = await (await fetch(`${base}/app.js`)).text();
+
+  assert.match(html, /data-dated-alerts-toggle/);
+  assert.match(html, /有日期嘅賽馬日／封路/);
+  assert.match(html, />\s*收起\s*</);
+  assert.match(html, /data-dated-alerts-body/);
+  assert.match(html, /data-direct-lesson-form/);
+  assert.match(html, /直接新增已確認課堂/);
+  assert.match(html, /STANDING ROUTE NOTICES/);
+  assert.match(html, /不會自動發送/);
+  assert.doesNotMatch(html, /src="\/src\//);
+
+  assert.match(css, /\.dated-alerts-block\.is-collapsed \.dated-alerts-body/);
+  assert.match(css, /max-width:\s*760px/);
+  assert.match(css, /\.dated-alerts-block:not\(\.is-expanded\) \.dated-alerts-body/);
+
+  assert.match(js, /ops-dated-alerts-collapsed/);
+  assert.match(js, /localStorage\.setItem\(DATED_ALERTS_COLLAPSE_KEY/);
+  assert.match(js, /collapsed \? '展開' : '收起'/);
+  assert.match(js, /isNarrowViewport/);
+});

@@ -289,6 +289,34 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
   padding-top: 1rem;
   border-top: 1px dashed #d4a72c;
 }
+.dated-alerts-toolbar { align-items: flex-start; }
+.dated-alerts-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.55rem;
+  max-width: 22rem;
+}
+.dated-alerts-actions .footnote { margin: 0; text-align: right; }
+.dated-alerts-toggle {
+  flex: 0 0 auto;
+  min-width: 6.5rem;
+}
+.dated-alerts-summary {
+  display: none;
+  margin: 0.35rem 0 0;
+  color: var(--warning);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.dated-alerts-block.is-collapsed .dated-alerts-body,
+.dated-alerts-block.is-collapsed .dated-alerts-footnote {
+  display: none;
+}
+.dated-alerts-block.is-collapsed .dated-alerts-summary {
+  display: block;
+}
 .ops-alert-form.is-create {
   margin-top: 0.85rem;
   padding: 0.85rem 0.95rem;
@@ -477,6 +505,17 @@ th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--line)
   .stats, .compact-stats, .grid-two, .grid-three { grid-template-columns: 1fr; }
   .policy-badge { align-self: flex-start; }
   .today-date { align-self: flex-start; }
+  .dated-alerts-actions { align-items: stretch; max-width: none; }
+  .dated-alerts-actions .footnote { text-align: left; }
+  .dated-alerts-toggle { width: 100%; }
+  /* Collapse before JS so phone users immediately see 建立課堂. */
+  .dated-alerts-block:not(.is-expanded) .dated-alerts-body,
+  .dated-alerts-block:not(.is-expanded) .dated-alerts-footnote {
+    display: none;
+  }
+  .dated-alerts-block:not(.is-expanded) .dated-alerts-summary {
+    display: block;
+  }
   .calendar-card, .selected-day { padding: 0.65rem; }
   .calendar-toolbar { grid-template-columns: auto 1fr auto; gap: 0.45rem; }
   .calendar-toolbar-actions [data-calendar-today] { display: none; }

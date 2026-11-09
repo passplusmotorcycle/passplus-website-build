@@ -1,6 +1,8 @@
 const TOKEN_KEY = 'ops-admin-token';
 const TOKEN_SAVED_AT_KEY = 'ops-admin-token-saved-at';
 const TOKEN_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000;
+const DATED_ALERTS_COLLAPSE_KEY = 'ops-dated-alerts-collapsed';
+const NARROW_VIEWPORT = '(max-width: 760px)';
 
 function readStoredToken() {
   const localToken = localStorage.getItem(TOKEN_KEY);
@@ -542,6 +544,51 @@ function renderLocationNoticeHints() {
   });
 }
 
+function isNarrowViewport() {
+  return window.matchMedia(NARROW_VIEWPORT).matches;
+}
+
+function readDatedAlertsCollapsed() {
+  const saved = localStorage.getItem(DATED_ALERTS_COLLAPSE_KEY);
+  if (saved === '1') return true;
+  if (saved === '0') return false;
+  return isNarrowViewport();
+}
+
+function persistDatedAlertsCollapsed(collapsed) {
+  localStorage.setItem(DATED_ALERTS_COLLAPSE_KEY, collapsed ? '1' : '0');
+}
+
+function applyDatedAlertsCollapsed(collapsed) {
+  const block = $('[data-dated-alerts-block]');
+  const toggle = $('[data-dated-alerts-toggle]');
+  if (!block || !toggle) return;
+  block.classList.toggle('is-collapsed', collapsed);
+  block.classList.toggle('is-expanded', !collapsed);
+  toggle.setAttribute('aria-expanded', String(!collapsed));
+  toggle.textContent = collapsed ? '展開' : '收起';
+}
+
+function bindDatedAlertsCollapse() {
+  const toggle = $('[data-dated-alerts-toggle]');
+  if (!toggle || toggle.dataset.bound === 'true') return;
+  toggle.dataset.bound = 'true';
+  applyDatedAlertsCollapsed(readDatedAlertsCollapsed());
+  toggle.addEventListener('click', () => {
+    const nextCollapsed = !$('[data-dated-alerts-block]')?.classList.contains('is-collapsed');
+    persistDatedAlertsCollapsed(nextCollapsed);
+    applyDatedAlertsCollapsed(nextCollapsed);
+  });
+}
+
+function updateDatedAlertSummary(count) {
+  const summary = $('[data-dated-alert-summary]');
+  if (!summary) return;
+  summary.textContent = count
+    ? `已有 ${count} 個日期提醒 · 收起後仍然會喺課堂日曆標示`
+    : '未有日期提醒 · 可展開加入';
+}
+
 function renderOpsAlerts() {
   const root = $('[data-ops-alerts]');
   const list = $('[data-ops-alert-list]');
@@ -552,6 +599,7 @@ function renderOpsAlerts() {
   root.hidden = !notices.length && !dated.length;
   list.innerHTML = notices.map(operationalNoticeCard).join('');
   bindNoticeEditors(list);
+  updateDatedAlertSummary(dated.length);
   if (datedList) {
     datedList.innerHTML = dated.length
       ? dated.map(datedAlertCard).join('')
@@ -1520,6 +1568,7 @@ $('[data-draft-reminders]').addEventListener('click', async () => {
 });
 $('[data-token]').value = state.token;
 renderSession();
+bindDatedAlertsCollapse();
 
 const calendarNow = hongKongDateParts();
 state.calendarYear = Number(calendarNow.year);
